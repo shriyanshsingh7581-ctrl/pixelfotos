@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public studio user account metadata without raw PII.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "studioId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "role": { "type": "string", "enum": ["studio_owner", "studio_admin", "photographer", "photo_editor", "customer", "event_guest"] },
+        "onboardingStep": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "studioId", "role", "onboardingStep", "createdAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII document for a user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "Studio": {
+      "title": "Studio",
+      "description": "Photography studio tenant profile and subscription settings.",
+      "type": "object",
+      "properties": {
+        "studioName": { "type": "string", "maxLength": 120 },
+        "slug": { "type": "string", "maxLength": 80, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "subscriptionPlan": { "type": "string", "enum": ["starter", "pro", "studio_max"] },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "trial", "suspended"] },
+        "watermarkText": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studioName", "slug", "ownerId", "subscriptionPlan", "subscriptionStatus", "watermarkText", "createdAt"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Photography project or event belonging to a studio.",
+      "type": "object",
+      "properties": {
+        "studioId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "projectName": { "type": "string", "maxLength": 140 },
+        "projectType": { "type": "string", "enum": ["wedding", "pre_wedding", "event", "portrait", "editorial", "corporate"] },
+        "eventDate": { "type": "string", "maxLength": 40 },
+        "location": { "type": "string", "maxLength": 140 },
+        "status": { "type": "string", "enum": ["planning", "shooting", "culling", "proofing", "delivered"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studioId", "ownerId", "projectName", "projectType", "eventDate", "location", "status", "createdAt"]
+    },
+    "Gallery": {
+      "title": "Gallery",
+      "description": "Client or event photo gallery with proofing and access rules.",
+      "type": "object",
+      "properties": {
+        "studioId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "projectId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "galleryName": { "type": "string", "maxLength": 140 },
+        "accessType": { "type": "string", "enum": ["public", "private", "password"] },
+        "passwordHash": { "type": "string", "maxLength": 128 },
+        "selectionLimit": { "type": "number" },
+        "watermarkEnabled": { "type": "boolean" },
+        "downloadEnabled": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["draft", "published", "selection_submitted", "locked"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studioId", "projectId", "ownerId", "galleryName", "accessType", "passwordHash", "selectionLimit", "watermarkEnabled", "downloadEnabled", "status", "createdAt"]
+    },
+    "PhotoAsset": {
+      "title": "PhotoAsset",
+      "description": "Cloudinary photo metadata inside a gallery.",
+      "type": "object",
+      "properties": {
+        "studioId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "galleryId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "publicId": { "type": "string", "maxLength": 200 },
+        "secureUrl": { "type": "string", "maxLength": 500 },
+        "fileName": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "maxLength": 60 },
+        "selected": { "type": "boolean" },
+        "liked": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studioId", "galleryId", "ownerId", "publicId", "secureUrl", "fileName", "category", "selected", "liked", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public non-PII user profile"
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated user PII data"
+    },
+    "/studios/{studioId}": {
+      "schema": { "$ref": "#/entities/Studio" },
+      "description": "Photography studio record"
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Studio photography projects"
+    },
+    "/galleries/{galleryId}": {
+      "schema": { "$ref": "#/entities/Gallery" },
+      "description": "Client and event photo galleries"
+    },
+    "/galleries/{galleryId}/photos/{photoId}": {
+      "schema": { "$ref": "#/entities/PhotoAsset" },
+      "description": "Photos inside a specific gallery"
+    }
+  }
+}

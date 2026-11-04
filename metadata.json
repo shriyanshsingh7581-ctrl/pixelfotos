@@ -1,0 +1,6 @@
+{
+  "name": "Lumina Studio OS — Photography SaaS & Client Proofing Platform",
+  "description": "All-in-one photography studio management, bulk Cloudinary photo delivery, QR event sharing, client album selection, online photo editor, and studio CRM.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #0F172A;
+    background-color: #F8FAFC;
+  }
+
+  h1, h2, .font-serif-editorial {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-mono, .tabular-nums {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes orbitSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbitReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulseHalo {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.28;
+  }
+  50% {
+    transform: scale(1.16);
+    opacity: 0.48;
+  }
+}
+
+@keyframes shimmerFilament {
+  0%, 100% {
+    transform: scaleX(0.45);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 0.95;
+  }
+}
+
+@keyframes floatLetter {
+  0%, 100% {
+    transform: translateY(0px);
+    opacity: 0.86;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+.animate-orbit-slow {
+  animation: orbitSlow 44s linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbitReverse 32s linear infinite;
+}
+
+.animate-pulse-halo {
+  animation: pulseHalo 6.5s ease-in-out infinite;
+}
+
+.animate-shimmer-filament {
+  animation: shimmerFilament 4.2s ease-in-out infinite;
+}
+
+.animate-float-letter {
+  animation: floatLetter 3.4s ease-in-out infinite;
+}
+
+

@@ -1,0 +1,65 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "studios": {
+      "$studioId": {
+        ".read": "auth != null && (data.child('ownerId').val() === auth.uid || root.child('studioMembers').child($studioId).child(auth.uid).exists())",
+        ".write": "auth != null && (!data.exists() ? newData.child('ownerId').val() === auth.uid : data.child('ownerId').val() === auth.uid)"
+      }
+    },
+    "studioMembers": {
+      "$studioId": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('studios').child($studioId).child('ownerId').val() === auth.uid)",
+          ".write": "auth != null && root.child('studios').child($studioId).child('ownerId').val() === auth.uid"
+        }
+      }
+    },
+    "projects": {
+      "$studioId": {
+        ".indexOn": ["eventDate", "status", "createdAt"],
+        "$projectId": {
+          ".read": "auth != null && (root.child('studios').child($studioId).child('ownerId').val() === auth.uid || root.child('studioMembers').child($studioId).child(auth.uid).exists())",
+          ".write": "auth != null && (root.child('studios').child($studioId).child('ownerId').val() === auth.uid || root.child('studioMembers').child($studioId).child(auth.uid).child('role').val() === 'studio_admin')"
+        }
+      }
+    },
+    "galleries": {
+      "$studioId": {
+        ".indexOn": ["projectId", "status", "accessType"],
+        "$galleryId": {
+          ".read": "data.child('accessType').val() === 'public' || (auth != null && (root.child('studios').child($studioId).child('ownerId').val() === auth.uid || root.child('studioMembers').child($studioId).child(auth.uid).exists()))",
+          ".write": "auth != null && root.child('studios').child($studioId).child('ownerId').val() === auth.uid"
+        }
+      }
+    },
+    "photos": {
+      "$studioId": {
+        "$galleryId": {
+          ".indexOn": ["uploadedAt", "category"],
+          "$photoId": {
+            ".read": "root.child('galleries').child($studioId).child($galleryId).child('accessType').val() === 'public' || (auth != null && root.child('studios').child($studioId).child('ownerId').val() === auth.uid)",
+            ".write": "auth != null && root.child('studios').child($studioId).child('ownerId').val() === auth.uid"
+          }
+        }
+      }
+    },
+    "selections": {
+      "$galleryId": {
+        "$clientId": {
+          "$photoId": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid === $clientId"
+          }
+        }
+      }
+    }
+  }
+}
