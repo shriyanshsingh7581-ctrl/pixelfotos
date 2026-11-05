@@ -20,10 +20,10 @@ export default function App() {
     if (params.get('autostart') === '1' || params.get('gallery')) {
       return 'dashboard';
     }
-    if (params.get('preview') === 'landing') {
-      return 'landing';
+    if (params.get('preview') === 'coming_soon') {
+      return 'coming_soon';
     }
-    return 'coming_soon';
+    return 'landing';
   });
 
   const [dashboardTab, setDashboardTab] = useState<DashboardTabId>(() => {
@@ -38,8 +38,8 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('autostart') === '1') {
       setActiveView('dashboard');
-    } else if (params.get('preview') === 'landing') {
-      setActiveView('landing');
+    } else if (params.get('preview') === 'coming_soon') {
+      setActiveView('coming_soon');
     }
   }, []);
 

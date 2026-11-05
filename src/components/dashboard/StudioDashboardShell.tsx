@@ -39,6 +39,7 @@ import {
   hashGalleryPassword,
 } from '../../utils/studioLogic';
 import { StudioGallery, StudioProject, UserRole } from '../../types';
+import { FotoOwlActionMode, FotoOwlFeatureBar } from '../FotoOwlFeatureBar';
 
 export type DashboardTabId =
   | 'overview'
@@ -89,6 +90,7 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
   } = useAuth();
 
   const [activeTab, setActiveTab] = useState<DashboardTabId>(initialTab);
+  const [fotoOwlAction, setFotoOwlAction] = useState<FotoOwlActionMode | null>('face_match');
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
@@ -206,12 +208,59 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
     setActiveTab('selection');
   };
 
+  const handleFotoOwlAction = (mode: FotoOwlActionMode) => {
+    setFotoOwlAction(mode);
+    if (mode === 'live_upload') {
+      setActiveTab('upload');
+    } else {
+      setActiveTab('selection');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row">
-      {/* Desktop Sidebar */}
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row">
+      {/* iPad & Tablet Compact Sidebar (768px - 1023px) */}
+      <aside
+        aria-label="iPad and Tablet Compact Sidebar"
+        className="hidden md:flex lg:hidden flex-col justify-between bg-[#0F172A] text-slate-200 border-r border-slate-800 w-28 shrink-0 py-4 px-2"
+      >
+        <div className="space-y-5 flex flex-col items-center">
+          <button
+            type="button"
+            onClick={onNavigateLanding}
+            className="text-xs font-extrabold tracking-tight text-white py-1.5 px-2.5 rounded-lg bg-slate-800"
+            title="FotoOwl Studio OS"
+          >
+            FotoOwl
+          </button>
+
+          <nav className="space-y-1.5 w-full" aria-label="Tablet Navigation">
+            {navItems.slice(0, 10).map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  title={item.label}
+                  className={`w-full text-center py-2 px-1.5 rounded-xl text-[11px] font-medium transition-colors truncate ${
+                    isActive
+                      ? 'bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white shadow-xs'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </aside>
+
+      {/* Desktop Full / Collapsible Sidebar (>= 1024px) */}
       <aside
         className={`hidden lg:flex flex-col justify-between bg-[#0F172A] text-slate-200 border-r border-slate-800 shrink-0 transition-all ${
-          sidebarCollapsed ? 'w-20' : 'w-64'
+          sidebarCollapsed ? 'w-28' : 'w-64'
         }`}
       >
         <div className="p-4 space-y-6">
@@ -223,9 +272,9 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
                 className="text-left focus:outline-none"
               >
                 <span className="text-lg font-bold tracking-tight text-white block">
-                  Lumina Studio OS
+                  FotoOwl Studio OS
                 </span>
-                <span className="text-[11px] text-teal-400 block truncate">
+                <span className="text-[11px] text-[#FF6A3D] block truncate">
                   {studio.studioName}
                 </span>
               </button>
@@ -233,30 +282,28 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
             <button
               type="button"
               onClick={() => setSidebarCollapsed((c) => !c)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              className="px-2 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800"
               aria-label="Toggle Sidebar Width"
             >
-              <Menu className="w-4 h-4" />
+              {sidebarCollapsed ? 'Expand' : 'Collapse'}
             </button>
           </div>
 
           <nav className="space-y-1" aria-label="Studio Workspace Navigation">
             {navItems.map((item) => {
-              const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap truncate ${
                     isActive
-                      ? 'bg-[#0D9488] text-white'
+                      ? 'bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white shadow-xs'
                       : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  {!sidebarCollapsed && <span>{item.label}</span>}
+                  {sidebarCollapsed ? item.label.split(' ')[0] : item.label}
                 </button>
               );
             })}
@@ -273,7 +320,7 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
             </div>
             <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
               <div
-                className="bg-[#0D9488] h-full"
+                className="bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] h-full"
                 style={{ width: `${quotaStatus.storagePercent}%` }}
               />
             </div>
@@ -286,7 +333,7 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-24">
         {/* Top Workspace Header (Strict 3-Zone Contract) */}
         <header className="bg-white border-b border-slate-200 px-4 md:px-8 py-3.5 flex items-center justify-between gap-4 sticky top-0 z-30">
           {/* Left Zone: Breadcrumb & Mobile Menu Trigger */}
@@ -294,10 +341,10 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100"
+              className="md:hidden px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200"
               aria-label="Open Navigation Menu"
             >
-              <Menu className="w-5 h-5" />
+              Menu
             </button>
             <div className="flex items-center gap-2 text-xs md:text-sm font-medium text-slate-600 truncate">
               <button
@@ -314,10 +361,8 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
             </div>
           </div>
 
-          {/* Right Zone: Role Switcher, PWA Install & Primary Action */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <PWAInstallButton />
-
+          {/* Right Zone: Role Switcher & Primary Action */}
+          <div className="flex items-center gap-2 shrink-0">
             <label htmlFor="workspace-role-switcher" className="sr-only">
               Active RBAC Role
             </label>
@@ -325,7 +370,7 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
               id="workspace-role-switcher"
               value={activeRole}
               onChange={(e) => setActiveRole(e.target.value as UserRole)}
-              className="px-3 py-1.5 text-xs font-medium bg-slate-100 border border-slate-200 rounded-lg text-slate-800"
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-medium bg-slate-100 border border-slate-200 rounded-lg text-slate-800 max-w-[140px] sm:max-w-none truncate"
             >
               <option value="studio_owner">Role: Studio Owner</option>
               <option value="studio_admin">Role: Studio Admin</option>
@@ -339,9 +384,10 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
             <button
               type="button"
               onClick={onOpenAuthModal}
-              className="px-3.5 py-2 text-xs font-medium bg-[#0F172A] text-white rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0"
+              className="px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white rounded-lg hover:opacity-95 transition-opacity whitespace-nowrap shrink-0"
             >
-              Studio Auth &amp; Setup
+              <span className="sm:hidden">Auth</span>
+              <span className="hidden sm:inline">Studio Auth &amp; Setup</span>
             </button>
           </div>
         </header>
@@ -356,38 +402,34 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
             <div className="relative w-72 max-w-[82vw] bg-[#0F172A] text-white p-5 flex flex-col justify-between z-10 overflow-y-auto">
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold">Lumina Studio OS</span>
+                  <span className="text-lg font-bold">FotoOwl Studio OS</span>
                   <button
                     type="button"
                     onClick={() => setMobileDrawerOpen(false)}
-                    className="p-1 text-slate-400 hover:text-white"
+                    className="text-xs font-semibold text-slate-400 hover:text-white"
                     aria-label="Close Menu"
                   >
-                    <X className="w-5 h-5" />
+                    Close
                   </button>
                 </div>
                 <nav className="space-y-1">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setMobileDrawerOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium ${
-                          activeTab === item.id
-                            ? 'bg-[#0D9488] text-white'
-                            : 'text-slate-300 hover:bg-slate-800'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileDrawerOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium ${
+                        activeTab === item.id
+                          ? 'bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white'
+                          : 'text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </nav>
               </div>
             </div>
@@ -417,31 +459,28 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowNewProjectModal(true)}
-                    className="px-3.5 py-2 text-xs font-medium border border-slate-200 rounded-lg text-slate-800 hover:bg-slate-50 inline-flex items-center gap-1.5"
+                    className="px-3.5 py-2 text-xs font-medium border border-slate-200 rounded-lg text-slate-800 hover:bg-slate-50"
                   >
-                    <Plus className="w-3.5 h-3.5 text-[#0D9488]" />
-                    <span>New Project</span>
+                    New Project
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowNewGalleryModal(true)}
-                    className="px-3.5 py-2 text-xs font-medium border border-slate-200 rounded-lg text-slate-800 hover:bg-slate-50 inline-flex items-center gap-1.5"
+                    className="px-3.5 py-2 text-xs font-medium border border-slate-200 rounded-lg text-slate-800 hover:bg-slate-50"
                   >
-                    <QrCode className="w-3.5 h-3.5 text-[#0D9488]" />
-                    <span>Create Gallery</span>
+                    Create Gallery
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('upload')}
-                    className="px-4 py-2 text-xs font-medium bg-[#0D9488] text-white rounded-lg hover:bg-teal-700 inline-flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white rounded-lg hover:opacity-95"
                   >
-                    <CloudUpload className="w-3.5 h-3.5" />
-                    <span>Bulk Upload Photos</span>
+                    Bulk Upload Photos
                   </button>
                 </div>
               </div>
 
-              {/* 8 Actionable Studio KPI Cards */}
+              {/* 8 Actionable Studio KPI Cards (Clean Text — No Icons) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   {
@@ -497,11 +536,11 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
                     key={stat.label}
                     type="button"
                     onClick={() => setActiveTab(stat.target)}
-                    className="bg-white border border-slate-200 hover:border-[#0D9488] rounded-xl p-4 text-left transition-colors group"
+                    className="bg-white border border-slate-200 hover:border-[#E61575] rounded-xl p-4 text-left transition-colors group"
                   >
                     <div className="flex items-center justify-between text-xs text-slate-500">
                       <span>{stat.label}</span>
-                      <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#0D9488]" />
+                      <span className="text-slate-400 group-hover:text-[#E61575]">→</span>
                     </div>
                     <div className="text-2xl font-bold font-mono text-slate-900 mt-1.5 tabular-nums">
                       {stat.value}
@@ -709,7 +748,13 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
           )}
 
           {/* TAB: CLIENT SELECTION & AI FACE SEARCH */}
-          {activeTab === 'selection' && <ClientGalleryPortal isEmbeddedInDashboard />}
+          {activeTab === 'selection' && (
+            <ClientGalleryPortal
+              isEmbeddedInDashboard
+              externalFotoOwlMode={fotoOwlAction}
+              onChangeFotoOwlMode={setFotoOwlAction}
+            />
+          )}
 
           {/* TAB: ONLINE PHOTO EDITOR */}
           {activeTab === 'editor' && (
@@ -999,35 +1044,12 @@ export const StudioDashboardShell: React.FC<StudioDashboardShellProps> = ({
           {activeTab === 'super_admin' && <SuperAdminConsole />}
         </main>
 
-        {/* Mobile Bottom Navigation Bar (<= 15% mobile sticky height) */}
-        <nav
-          aria-label="Mobile Quick Navigation"
-          className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around z-30"
-        >
-          {[
-            { id: 'overview' as DashboardTabId, label: 'Overview', icon: LayoutDashboard },
-            { id: 'selection' as DashboardTabId, label: 'Galleries', icon: ImageIcon },
-            { id: 'upload' as DashboardTabId, label: 'Upload', icon: CloudUpload },
-            { id: 'editor' as DashboardTabId, label: 'Editor', icon: Sliders },
-            { id: 'crm' as DashboardTabId, label: 'CRM', icon: Users },
-          ].map((m) => {
-            const Icon = m.icon;
-            const active = activeTab === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setActiveTab(m.id)}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-1 rounded-lg text-[11px] font-medium ${
-                  active ? 'text-[#0D9488]' : 'text-slate-500'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{m.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+        {/* Exact FotoOwl Sticky Bottom Navigation Bar */}
+        <FotoOwlFeatureBar
+          activeMode={fotoOwlAction}
+          onSelectMode={handleFotoOwlAction}
+          variant="bottom_nav"
+        />
       </div>
 
       {/* New Project Modal */}

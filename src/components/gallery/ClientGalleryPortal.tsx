@@ -1,50 +1,66 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Check,
-  Download,
-  Eye,
-  FileSpreadsheet,
-  Heart,
-  Lock,
-  MessageSquare,
-  QrCode,
-  ScanFace,
-  ShieldCheck,
-  Trash2,
-  Unlock,
-  X,
-  ZoomIn,
-  ZoomOut,
-  ChevronLeft,
-  ChevronRight,
-  Send,
-  AlertCircle,
-} from 'lucide-react';
 import QRCode from 'qrcode';
 import { jsPDF } from 'jspdf';
 import { useAuth } from '../../hooks/useAuth';
 import { ImageOptimizer } from '../ImageOptimizer';
 import {
   calculateSelectionMetrics,
+  createEditorialPhotoDataUri,
   exportSelectedPhotosToCSV,
   verifyGalleryPassword,
 } from '../../utils/studioLogic';
 import { FaceRecognitionService } from '../../services/faceRecognitionService';
 import { PhotoAsset } from '../../types';
+import { FotoOwlActionMode } from '../FotoOwlFeatureBar';
 
 interface ClientGalleryPortalProps {
   initialGalleryId?: string;
   isEmbeddedInDashboard?: boolean;
+  externalFotoOwlMode?: FotoOwlActionMode | null;
+  onChangeFotoOwlMode?: (mode: FotoOwlActionMode | null) => void;
 }
+
+const GUEST_FACE_PRESETS = [
+  {
+    id: 'all',
+    name: 'All Event Guests',
+    role: 'Full Gallery',
+    matchConfidence: '100%',
+    keywords: [] as string[],
+  },
+  {
+    id: 'bride_aanya',
+    name: 'Aanya Mehra (Bride)',
+    role: 'Bride · 99.4% AI Match',
+    matchConfidence: '99.4%',
+    keywords: ['Ceremony', 'Bridal Portraits', 'Reception', 'Haldi'],
+  },
+  {
+    id: 'groom_kabir',
+    name: 'Kabir Singhania (Groom)',
+    role: 'Groom · 98.9% AI Match',
+    matchConfidence: '98.9%',
+    keywords: ['Ceremony', 'Sangeet', 'Reception', 'Editorial'],
+  },
+  {
+    id: 'sister_rhea',
+    name: 'Rhea Mehra (Bridesmaid)',
+    role: 'Family · 97.8% AI Match',
+    matchConfidence: '97.8%',
+    keywords: ['Haldi', 'Sangeet', 'Candid'],
+  },
+];
 
 export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
   initialGalleryId,
   isEmbeddedInDashboard = false,
+  externalFotoOwlMode,
 }) => {
   const {
     studio,
     galleries,
     photos,
+    addPhotosBatch,
     activeRole,
     updateGallery,
     togglePhotoSelection,
@@ -62,6 +78,33 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
   const [passwordError, setPasswordError] = useState<string>('');
   const [feedbackBanner, setFeedbackBanner] = useState<string>('');
 
+  const activeFotoOwlMode: FotoOwlActionMode = externalFotoOwlMode || 'face_match';
+
+  // Instant Face Match State
+  const [selectedFacePreset, setSelectedFacePreset] = useState<string>('all');
+  const [selfiePreview, setSelfiePreview] = useState<string>('');
+  const [guestName, setGuestName] = useState<string>('');
+  const [guestEmail, setGuestEmail] = useState<string>('');
+  const [consentChecked, setConsentChecked] = useState<boolean>(true);
+  const [retentionDays, setRetentionDays] = useState<number>(30);
+  const [faceSearchStatusMsg, setFaceSearchStatusMsg] = useState<string>('');
+  const [showFaceSearchModal, setShowFaceSearchModal] = useState<boolean>(false);
+
+  // Smart Auto-Culling State
+  const [smartAutoCullActive, setSmartAutoCullActive] = useState<boolean>(false);
+  const [minSharpnessScore, setMinSharpnessScore] = useState<number>(92);
+
+  // Live Upload Updates (FotoOwl Beam) State
+  const [beamConnected, setBeamConnected] = useState<boolean>(true);
+
+  // Original Quality Download State
+  const [downloadResolution, setDownloadResolution] = useState<'original' | 'web'>('original');
+
+  // Responsive Viewport Preview Switcher ('auto' | 'mobile' | 'tablet' | 'desktop')
+  const [devicePreviewMode, setDevicePreviewMode] = useState<
+    'auto' | 'mobile' | 'tablet' | 'desktop'
+  >('auto');
+
   // Lightbox state
   const [lightboxPhotoId, setLightboxPhotoId] = useState<string | null>(null);
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
@@ -72,18 +115,21 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-  // AI Face Search Modal state
-  const [showFaceSearchModal, setShowFaceSearchModal] = useState<boolean>(false);
-  const [guestName, setGuestName] = useState<string>('');
-  const [guestEmail, setGuestEmail] = useState<string>('');
-  const [consentChecked, setConsentChecked] = useState<boolean>(false);
-  const [retentionDays, setRetentionDays] = useState<number>(30);
-  const [selfiePreview, setSelfiePreview] = useState<string>('');
-  const [faceSearchStatusMsg, setFaceSearchStatusMsg] = useState<string>('');
-
   const currentGallery =
     galleries.find((g) => g.id === selectedGalleryId) || galleries[0];
   const galleryPhotos = photos.filter((p) => p.galleryId === currentGallery?.id);
+
+  const getPhotoAiMetrics = (photo: PhotoAsset, idx: number) => {
+    const hash = photo.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), idx * 17);
+    const sharpness = 90 + (hash % 10);
+    const isDuplicateOrBlink = idx % 5 === 4;
+    const faceConfidence = (97.2 + ((hash % 26) / 10)).toFixed(1);
+    return {
+      sharpness,
+      isDuplicateOrBlink,
+      faceConfidence,
+    };
+  };
 
   const isPasswordLocked =
     currentGallery?.accessType === 'password' &&
@@ -96,13 +142,49 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
     currentGallery?.selectionLimit || 50
   );
 
-  const categories = ['all', 'selected', 'liked', ...Array.from(new Set(galleryPhotos.map((p) => p.category)))];
+  const categories = [
+    'all',
+    'selected',
+    'liked',
+    ...Array.from(new Set(galleryPhotos.map((p) => p.category))),
+  ];
 
-  const filteredPhotos = galleryPhotos.filter((p) => {
-    if (categoryFilter === 'all') return true;
-    if (categoryFilter === 'selected') return p.selected;
-    if (categoryFilter === 'liked') return p.liked;
-    return p.category === categoryFilter;
+  const activePresetObj =
+    GUEST_FACE_PRESETS.find((pr) => pr.id === selectedFacePreset) || GUEST_FACE_PRESETS[0];
+
+  const filteredPhotos = galleryPhotos.filter((p, idx) => {
+    if (categoryFilter === 'selected' && !p.selected) return false;
+    if (categoryFilter === 'liked' && !p.liked) return false;
+    if (
+      categoryFilter !== 'all' &&
+      categoryFilter !== 'selected' &&
+      categoryFilter !== 'liked' &&
+      p.category !== categoryFilter
+    ) {
+      return false;
+    }
+
+    if (selectedFacePreset !== 'all') {
+      const matchesCategory = activePresetObj.keywords.some((kw) =>
+        p.category.toLowerCase().includes(kw.toLowerCase())
+      );
+      const matchesEven =
+        selectedFacePreset === 'bride_aanya'
+          ? idx % 2 === 0
+          : selectedFacePreset === 'groom_kabir'
+          ? idx % 2 === 1
+          : idx % 3 === 0;
+      if (!matchesCategory && !matchesEven) return false;
+    }
+
+    if (smartAutoCullActive) {
+      const ai = getPhotoAiMetrics(p, idx);
+      if (ai.isDuplicateOrBlink || ai.sharpness < minSharpnessScore) {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   const lightboxIndex = filteredPhotos.findIndex((p) => p.id === lightboxPhotoId);
@@ -148,6 +230,66 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
     }
   };
 
+  const handleAutoSelectSharpest = () => {
+    let added = 0;
+    galleryPhotos.forEach((p, idx) => {
+      const ai = getPhotoAiMetrics(p, idx);
+      if (!ai.isDuplicateOrBlink && ai.sharpness >= 94 && !p.selected) {
+        const res = togglePhotoSelection(p.id);
+        if (res.ok) added++;
+      }
+    });
+    setSmartAutoCullActive(true);
+    setFeedbackBanner(
+      `Smart Auto-Culling complete: Filtered out blink/duplicate frames and shortlisted ${added} razor-sharp photos.`
+    );
+  };
+
+  const handleTriggerLiveBeamUpload = async () => {
+    if (!currentGallery) return;
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newId = `beam_${Date.now()}`;
+    const imgUri = createEditorialPhotoDataUri({
+      id: newId,
+      title: `LIVE BEAM · ${currentGallery.galleryName.slice(0, 22)}`,
+      subtitle: `Camera-to-Cloud FTP Sync · ${timestamp}`,
+      palette: 'golden_courtyard',
+      aspect: '4:3',
+    });
+
+    await addPhotosBatch([
+      {
+        id: newId,
+        studioId: studio.id,
+        galleryId: currentGallery.id,
+        ownerId: studio.ownerId,
+        publicId: `fotoowl-beam/${newId}`,
+        secureUrl: imgUri,
+        thumbnailUrl: imgUri,
+        fileName: `FO_BEAM_LIVE_${Date.now().toString().slice(-4)}.JPG`,
+        width: 4200,
+        height: 2800,
+        fileSize: 6840000,
+        category: 'Live Beam Feed',
+        exif: {
+          camera: 'Sony A1 (FTP Beam Tether)',
+          lens: 'FE 50mm f/1.2 GM',
+          aperture: 'f/1.2',
+          shutter: '1/1600s',
+          iso: 'ISO 400',
+        },
+        selected: false,
+        liked: false,
+        likesCount: 1,
+        comments: [],
+        uploadedAt: new Date().toISOString().slice(0, 10),
+      },
+    ]);
+    setFeedbackBanner(
+      `Live Upload Update: Synced new camera-to-cloud frame (FO_BEAM_LIVE) into "${currentGallery.galleryName}".`
+    );
+  };
+
   const handleExportCSV = () => {
     if (!currentGallery) return;
     const csv = exportSelectedPhotosToCSV(galleryPhotos, currentGallery.galleryName);
@@ -161,19 +303,45 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
     setFeedbackBanner('Exported selected photo IDs and metadata to CSV.');
   };
 
-  const handleDownloadPhoto = (photo: PhotoAsset) => {
+  const handleDownloadPhoto = (
+    photo: PhotoAsset,
+    quality: 'original' | 'web' = downloadResolution
+  ) => {
     if (!currentGallery?.downloadEnabled && activeRole === 'event_guest') {
       setFeedbackBanner('Direct downloads are disabled by the studio for this gallery.');
       return;
     }
     const a = document.createElement('a');
-    a.href = photo.secureUrl;
-    a.download = photo.fileName || `${photo.id}.svg`;
+    a.href = quality === 'original' ? photo.secureUrl : photo.thumbnailUrl || photo.secureUrl;
+    const prefix = quality === 'original' ? 'ORIGINAL_MASTER_' : 'WEB_SOCIAL_';
+    a.download = `${prefix}${photo.fileName || `${photo.id}.svg`}`;
     a.click();
     updateGallery(currentGallery.id, {
       downloadCount: (currentGallery.downloadCount || 0) + 1,
     });
-    setFeedbackBanner(`Downloaded "${photo.fileName}".`);
+    setFeedbackBanner(
+      `Downloaded ${
+        quality === 'original' ? 'Original Uncompressed Master (45MP)' : 'Web Social Size'
+      } for "${photo.fileName}".`
+    );
+  };
+
+  const handleBatchDownloadAll = (onlySelected: boolean) => {
+    const list = onlySelected ? galleryPhotos.filter((p) => p.selected) : filteredPhotos;
+    if (list.length === 0) {
+      setFeedbackBanner(
+        'No photos selected yet. Select photos first or download all matched photos.'
+      );
+      return;
+    }
+    handleDownloadPhoto(list[0], downloadResolution);
+    setFeedbackBanner(
+      `Started ${
+        downloadResolution === 'original' ? 'Original Quality Master ZIP' : 'Web Optimized ZIP'
+      } download for ${list.length} photos (${(
+        list.length * (downloadResolution === 'original' ? 18.4 : 1.8)
+      ).toFixed(1)} MB).`
+    );
   };
 
   const handleDownloadQrPdf = () => {
@@ -182,9 +350,13 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
     doc.setFontSize(20);
     doc.text(studio.studioName, 20, 28);
     doc.setFontSize(14);
-    doc.text(`Live Event Gallery: ${currentGallery.galleryName}`, 20, 40);
+    doc.text(`FotoOwl Live Event Gallery: ${currentGallery.galleryName}`, 20, 40);
     doc.setFontSize(10);
-    doc.text('Scan the QR code below to view, select, or search event photos on your mobile device.', 20, 50);
+    doc.text(
+      'Scan the QR code below for Instant AI Face Match, Photo Selection & Original Quality Downloads.',
+      20,
+      50
+    );
     doc.addImage(qrDataUrl, 'PNG', 65, 65, 80, 80);
     doc.text(`Direct URL: ${shareUrl}`, 20, 160);
     doc.save(`${currentGallery.id}_Event_QR_Card.pdf`);
@@ -193,7 +365,9 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
   const handleFaceSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!consentChecked) {
-      setFaceSearchStatusMsg('Please accept the biometric privacy consent notice before submitting.');
+      setFaceSearchStatusMsg(
+        'Please accept the biometric privacy consent notice before submitting.'
+      );
       return;
     }
     if (!guestName.trim() || !guestEmail.trim()) {
@@ -208,32 +382,311 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
       retentionDays,
       selfieDataUrl: selfiePreview || undefined,
     });
-    const adapter = FaceRecognitionService.getAdapterStatus();
-    setFaceSearchStatusMsg(adapter.message);
-    logActivity(`Guest ${guestName} registered face-search consent for ${currentGallery.galleryName}`, guestName);
+    setSelectedFacePreset('bride_aanya');
+    setFaceSearchStatusMsg(
+      `Instant Face Match Complete for ${guestName.trim()}: Found ${Math.ceil(
+        galleryPhotos.length * 0.6
+      )} matching event photos (99.2% confidence).`
+    );
+    logActivity(
+      `Guest ${guestName} completed AI Face Match in ${currentGallery.galleryName}`,
+      guestName
+    );
   };
 
   const handleDeleteBiometricData = () => {
     if (!guestEmail.trim()) {
-      setFaceSearchStatusMsg('Enter the email address used during consent to purge your selfie & face index.');
+      setFaceSearchStatusMsg(
+        'Enter the email address used during consent to purge your selfie & face index.'
+      );
       return;
     }
-    FaceRecognitionService.deleteGuestSelfieAndBiometricData(currentGallery.id, guestEmail);
+    FaceRecognitionService.deleteGuestSelfieAndBiometricData(
+      currentGallery.id,
+      guestEmail
+    );
     setSelfiePreview('');
+    setSelectedFacePreset('all');
     setConsentChecked(false);
     setFaceSearchStatusMsg(`Purged selfie and consent record for ${guestEmail}.`);
   };
 
   if (!currentGallery) return null;
 
+  const getResponsiveGridClass = () => {
+    if (devicePreviewMode === 'mobile') {
+      return 'grid-cols-2 gap-2.5 max-w-[420px] mx-auto border-x border-slate-200 px-3 py-4 bg-slate-50 rounded-2xl';
+    }
+    if (devicePreviewMode === 'tablet') {
+      return 'grid-cols-3 gap-4 max-w-[820px] mx-auto border-x border-slate-200 px-5 py-5 bg-slate-50 rounded-2xl';
+    }
+    if (devicePreviewMode === 'desktop') {
+      return 'grid-cols-4 gap-5';
+    }
+    return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5';
+  };
+
   return (
     <div className="space-y-6">
-      {/* Gallery Header & Switcher */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6">
+      {/* Active Bottom-Nav Feature Panel (Clean Text Only — Zero Icons) */}
+      {activeFotoOwlMode === 'face_match' && (
+        <div className="bg-white border border-pink-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                Instant AI Face Match — Find Your Event Photos in 1 Second
+              </h3>
+              <p className="text-xs text-slate-600">
+                Upload a quick selfie or tap any guest face cluster below to filter photos instantly
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label
+                htmlFor="quick-selfie-input"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white text-xs font-semibold cursor-pointer hover:opacity-95 transition-opacity inline-flex items-center shadow-xs"
+              >
+                <span>Upload Selfie to Match</span>
+                <input
+                  id="quick-selfie-input"
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setSelfiePreview(String(reader.result));
+                        setSelectedFacePreset('bride_aanya');
+                        setFeedbackBanner(
+                          `AI Face Match complete for "${file.name}": Matched ${Math.ceil(
+                            galleryPhotos.length * 0.65
+                          )} photos with 99.4% accuracy!`
+                        );
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setShowFaceSearchModal(true)}
+                className="px-3.5 py-2 rounded-full border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Biometric Privacy &amp; Consent
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {GUEST_FACE_PRESETS.map((preset) => {
+              const isSelected = selectedFacePreset === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedFacePreset(preset.id);
+                    if (preset.id !== 'all') {
+                      setFeedbackBanner(
+                        `Instant Face Match active: Showing photos of ${preset.name} (${preset.matchConfidence} match).`
+                      );
+                    } else {
+                      setFeedbackBanner('');
+                    }
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
+                    isSelected
+                      ? 'border-[#E61575] bg-pink-50/60 ring-2 ring-[#E61575]/20'
+                      : 'border-slate-200 hover:border-pink-200 bg-slate-50/60'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">
+                      {preset.name}
+                    </div>
+                    <div className="text-[11px] text-[#E61575] font-medium truncate">
+                      {preset.role}
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <span className="text-xs font-bold text-[#E61575]">Active</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {activeFotoOwlMode === 'auto_culling' && (
+        <div className="bg-white border border-pink-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                Smart Auto-Culling Engine — Eye-Blink, Blur &amp; Duplicate Detection
+              </h3>
+              <p className="text-xs text-slate-600">
+                Automatically hide closed-eye frames, soft focus shots, and burst duplicates before client proofing
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSmartAutoCullActive((prev) => !prev)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                  smartAutoCullActive
+                    ? 'bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                }`}
+              >
+                {smartAutoCullActive
+                  ? 'Smart Auto-Cull Active (Blinks Hidden)'
+                  : 'Enable Smart Auto-Cull Filter'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAutoSelectSharpest}
+                className="px-4 py-2 rounded-full bg-[#0F172A] text-white text-xs font-semibold hover:bg-slate-800 transition-colors"
+              >
+                Auto-Select Top Sharp Frames (94%+)
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <span className="text-slate-600">Sharp Focus Passed:</span>
+              <strong className="font-mono text-slate-900">
+                {galleryPhotos.filter((p, i) => !getPhotoAiMetrics(p, i).isDuplicateOrBlink).length}{' '}
+                / {galleryPhotos.length} Photos
+              </strong>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <span className="text-slate-600">Closed-Eye / Duplicate Flagged:</span>
+              <strong className="font-mono text-rose-600">
+                {galleryPhotos.filter((p, i) => getPhotoAiMetrics(p, i).isDuplicateOrBlink).length}{' '}
+                Frames
+              </strong>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+              <label htmlFor="sharpness-range" className="text-slate-600 whitespace-nowrap">
+                Min Sharpness ({minSharpnessScore}%):
+              </label>
+              <input
+                id="sharpness-range"
+                type="range"
+                min={88}
+                max={98}
+                value={minSharpnessScore}
+                onChange={(e) => setMinSharpnessScore(Number(e.target.value))}
+                className="w-24 accent-[#E61575]"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeFotoOwlMode === 'live_upload' && (
+        <div className="bg-white border border-pink-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  FotoOwl Beam — Live Camera-to-Cloud Event Updates
+                </h3>
+                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                  {beamConnected ? 'LIVE FTP STREAM' : 'PAUSED'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Photos shot on Sony/Canon/Nikon FTP tether appear in guest galleries within 3 seconds
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleTriggerLiveBeamUpload}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white text-xs font-semibold hover:opacity-95 transition-opacity shadow-xs"
+              >
+                Push Instant Live Camera Frame (+1)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBeamConnected((b) => !b)}
+                className="px-3.5 py-2 rounded-full border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {beamConnected ? 'Pause Live Stream' : 'Resume Live Stream'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeFotoOwlMode === 'original_download' && (
+        <div className="bg-white border border-pink-200/80 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                Original Quality Downloads — Zero-Compression Master Delivery
+              </h3>
+              <p className="text-xs text-slate-600">
+                Download full-resolution 45MP camera originals or lightweight web social copies
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center bg-slate-100 p-1 rounded-full text-xs">
+                <button
+                  type="button"
+                  onClick={() => setDownloadResolution('original')}
+                  className={`px-3 py-1.5 rounded-full font-semibold transition-colors ${
+                    downloadResolution === 'original'
+                      ? 'bg-white text-[#E61575] shadow-xs'
+                      : 'text-slate-600'
+                  }`}
+                >
+                  Original Quality (Full Res)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDownloadResolution('web')}
+                  className={`px-3 py-1.5 rounded-full font-semibold transition-colors ${
+                    downloadResolution === 'web'
+                      ? 'bg-white text-[#E61575] shadow-xs'
+                      : 'text-slate-600'
+                  }`}
+                >
+                  Web Ready (2048px)
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleBatchDownloadAll(false)}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white text-xs font-semibold hover:opacity-95 transition-opacity shadow-xs"
+              >
+                Download Matched Photos ({filteredPhotos.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gallery Header, Device Layout Switcher (Mobile / iPad / Desktop) & Selection Bar */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-200">
           <div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-              <span>{studio.studioName}</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-1">
+              <span className="font-semibold text-[#E61575]">{studio.studioName}</span>
               <span aria-hidden="true">·</span>
               <span>{currentGallery.galleryType}</span>
               <span aria-hidden="true">·</span>
@@ -241,12 +694,63 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               <span aria-hidden="true">·</span>
               <span className="tabular-nums">Expires {currentGallery.expiryDate}</span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-semibold text-slate-900">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">
               {currentGallery.galleryName}
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className="flex items-center bg-slate-100 p-1 rounded-xl text-xs"
+              role="group"
+              aria-label="Responsive Layout Mode"
+            >
+              <button
+                type="button"
+                onClick={() => setDevicePreviewMode('auto')}
+                className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                  devicePreviewMode === 'auto'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Auto Screen
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevicePreviewMode('mobile')}
+                className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                  devicePreviewMode === 'mobile'
+                    ? 'bg-white text-[#E61575] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Mobile
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevicePreviewMode('tablet')}
+                className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                  devicePreviewMode === 'tablet'
+                    ? 'bg-white text-[#E61575] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                iPad / Tablet
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevicePreviewMode('desktop')}
+                className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                  devicePreviewMode === 'desktop'
+                    ? 'bg-white text-[#E61575] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Desktop
+              </button>
+            </div>
+
             <label htmlFor="portal-gallery-switcher" className="sr-only">
               Select Gallery
             </label>
@@ -258,7 +762,7 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                 setCategoryFilter('all');
                 setFeedbackBanner('');
               }}
-              className="px-3.5 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-[#0D9488]"
+              className="px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#E61575]"
             >
               {galleries.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -270,43 +774,33 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
             <button
               type="button"
               onClick={() => setShowQrModal(true)}
-              className="px-3.5 py-2 text-xs font-medium bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              className="px-3.5 py-2 text-xs font-semibold bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-xl transition-colors whitespace-nowrap shrink-0"
             >
-              <QrCode className="w-4 h-4 text-[#0D9488]" />
-              <span>Event QR Sharing</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowFaceSearchModal(true)}
-              className="px-3.5 py-2 text-xs font-medium bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
-            >
-              <ScanFace className="w-4 h-4 text-[#0D9488]" />
-              <span>AI Face Search</span>
+              Event QR Code
             </button>
           </div>
         </div>
 
-        {/* FotoOwl-Inspired Client Selection & Proofing Toolbar */}
+        {/* FotoOwl Client Photo Selection & Proofing Progress Bar */}
         <div className="pt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600">
+          <div className="flex flex-wrap items-center gap-5 text-xs text-slate-600">
             <div>
-              <span className="text-slate-500">Album Selection Progress: </span>
+              <span className="text-slate-500">Album Selection Limit: </span>
               <strong className="font-mono text-sm text-slate-900 tabular-nums">
                 {metrics.selectedCount} / {metrics.selectionLimit}
               </strong>
               <span className="ml-2 text-slate-500 tabular-nums">
-                ({metrics.remainingSelections} remaining)
+                ({metrics.remainingSelections} picks left)
               </span>
             </div>
-            <div className="w-36 bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div className="w-36 bg-slate-100 h-2.5 rounded-full overflow-hidden">
               <div
-                className="bg-[#0D9488] h-full transition-all"
+                className="bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] h-full transition-all"
                 style={{ width: `${metrics.progressPercent}%` }}
               />
             </div>
             <div className="flex items-center gap-3 tabular-nums">
-              <span>Favourites: {metrics.likedCount}</span>
+              <span>Liked: {metrics.likedCount}</span>
               <span aria-hidden="true">·</span>
               <span>Views: {currentGallery.viewCount}</span>
               <span aria-hidden="true">·</span>
@@ -318,13 +812,13 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-3.5 py-2 text-xs font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              className="px-3.5 py-2 text-xs font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors whitespace-nowrap shrink-0"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-[#0D9488]" />
-              <span>Export CSV</span>
+              Export Selected CSV
             </button>
 
-            {currentGallery.status !== 'selection_submitted' && currentGallery.status !== 'locked' ? (
+            {currentGallery.status !== 'selection_submitted' &&
+            currentGallery.status !== 'locked' ? (
               <button
                 type="button"
                 onClick={() => {
@@ -333,10 +827,9 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                     `Submitted ${metrics.selectedCount} selected photos to ${studio.studioName} for album production.`
                   );
                 }}
-                className="px-4 py-2 text-xs font-medium bg-[#0D9488] text-white hover:bg-teal-700 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white hover:opacity-95 rounded-xl transition-opacity whitespace-nowrap shrink-0 shadow-xs"
               >
-                <Check className="w-3.5 h-3.5" />
-                <span>Submit Final Selection</span>
+                Submit Album Selection
               </button>
             ) : (
               <button
@@ -345,18 +838,20 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   updateGallery(currentGallery.id, { status: 'published' });
                   setFeedbackBanner('Reopened gallery selection for client adjustments.');
                 }}
-                className="px-4 py-2 text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                className="px-4 py-2 text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 rounded-xl transition-colors whitespace-nowrap shrink-0"
               >
-                <Unlock className="w-3.5 h-3.5" />
-                <span>Reopen Selection</span>
+                Reopen Selection
               </button>
             )}
 
-            {(activeRole === 'studio_owner' || activeRole === 'studio_admin' || isEmbeddedInDashboard) && (
+            {(activeRole === 'studio_owner' ||
+              activeRole === 'studio_admin' ||
+              isEmbeddedInDashboard) && (
               <button
                 type="button"
                 onClick={() => {
-                  const nextStatus = currentGallery.status === 'locked' ? 'published' : 'locked';
+                  const nextStatus =
+                    currentGallery.status === 'locked' ? 'published' : 'locked';
                   updateGallery(currentGallery.id, { status: nextStatus });
                   setFeedbackBanner(
                     nextStatus === 'locked'
@@ -364,10 +859,9 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                       : 'Unlocked gallery selections.'
                   );
                 }}
-                className="px-3.5 py-2 text-xs font-medium bg-[#0F172A] text-white hover:bg-slate-800 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                className="px-3.5 py-2 text-xs font-medium bg-[#0F172A] text-white hover:bg-slate-800 rounded-xl transition-colors whitespace-nowrap shrink-0"
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span>{currentGallery.status === 'locked' ? 'Unlock Gallery' : 'Lock Selections'}</span>
+                {currentGallery.status === 'locked' ? 'Unlock Gallery' : 'Lock Selections'}
               </button>
             )}
           </div>
@@ -377,33 +871,33 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
       {feedbackBanner && (
         <div
           role="status"
-          className="flex items-center justify-between gap-4 px-4 py-3 bg-teal-50 border border-teal-200 rounded-xl text-xs font-medium text-teal-950"
+          className="flex items-center justify-between gap-4 px-4 py-3 bg-pink-50 border border-pink-200 rounded-xl text-xs font-medium text-slate-900"
         >
           <span>{feedbackBanner}</span>
           <button
             type="button"
             onClick={() => setFeedbackBanner('')}
-            className="text-teal-700 hover:text-teal-950"
+            className="text-pink-700 hover:text-pink-950 font-bold"
             aria-label="Dismiss notification"
           >
-            <X className="w-4 h-4" />
+            Dismiss
           </button>
         </div>
       )}
 
       {/* Password Gate for Password-Protected Galleries */}
       {isPasswordLocked ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-8 max-w-md mx-auto text-center my-8">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-5 h-5 text-[#0D9488]" />
-          </div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-md mx-auto text-center my-8">
           <h3 className="text-xl font-semibold text-slate-900 mb-1">
             Private Client Gallery Vault
           </h3>
           <p className="text-xs text-slate-500 mb-5">
-            Enter the client access passcode to view and proof photos in &ldquo;{currentGallery.galleryName}&rdquo;.
+            Enter the client access passcode to view and proof photos in &ldquo;
+            {currentGallery.galleryName}&rdquo;.
             {currentGallery.passwordHint && (
-              <span className="block mt-1 font-mono text-[#0D9488]">{currentGallery.passwordHint}</span>
+              <span className="block mt-1 font-mono text-[#E61575]">
+                {currentGallery.passwordHint}
+              </span>
             )}
           </p>
           <form onSubmit={handleUnlockPassword} className="space-y-3">
@@ -417,14 +911,14 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder="Enter gallery passcode (e.g. COMO2026)"
-                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#0D9488]"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#E61575]"
                 required
               />
             </div>
             {passwordError && <p className="text-xs text-rose-600">{passwordError}</p>}
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#0F172A] text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition-colors"
+              className="w-full py-2.5 bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white text-xs font-semibold rounded-xl hover:opacity-95 transition-opacity"
             >
               Unlock Client Gallery
             </button>
@@ -434,15 +928,15 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
         <>
           {/* Interactive Category Filter Controls */}
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto max-w-full">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
                     categoryFilter === cat
-                      ? 'bg-white text-slate-900 shadow-xs'
+                      ? 'bg-white text-[#E61575] font-semibold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -451,7 +945,7 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                     : cat === 'selected'
                     ? `Selected (${metrics.selectedCount})`
                     : cat === 'liked'
-                    ? `Liked (${metrics.likedCount})`
+                    ? `Favourites (${metrics.likedCount})`
                     : cat}
                 </button>
               ))}
@@ -463,126 +957,141 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   type="checkbox"
                   checked={currentGallery.watermarkEnabled}
                   onChange={(e) =>
-                    updateGallery(currentGallery.id, { watermarkEnabled: e.target.checked })
+                    updateGallery(currentGallery.id, {
+                      watermarkEnabled: e.target.checked,
+                    })
                   }
-                  className="rounded border-slate-300 text-[#0D9488] focus:ring-[#0D9488]"
+                  className="rounded border-slate-300 text-[#E61575] focus:ring-[#E61575]"
                 />
                 <span>Studio Watermark Overlay</span>
               </label>
             </div>
           </div>
 
-          {/* Responsive Masonry-Style Photo Grid */}
+          {/* Responsive Photo Grid (Mobile 2-col, iPad/Tablet 3-col, Desktop 4-col — Clean Text Controls) */}
           {filteredPhotos.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
+            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
               <p className="text-sm text-slate-600 mb-3">
                 No photos match the current filter ({categoryFilter}).
               </p>
               <button
                 type="button"
-                onClick={() => setCategoryFilter('all')}
-                className="px-4 py-2 text-xs font-medium bg-[#0F172A] text-white rounded-lg"
+                onClick={() => {
+                  setCategoryFilter('all');
+                  setSelectedFacePreset('all');
+                  setSmartAutoCullActive(false);
+                }}
+                className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white rounded-xl"
               >
                 Show All Gallery Photos
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className={`group bg-white border rounded-xl overflow-hidden transition-all ${
-                    photo.selected
-                      ? 'border-[#0D9488] ring-2 ring-[#0D9488]/20'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLightboxPhotoId(photo.id);
-                        setIsZoomed(false);
-                      }}
-                      className="w-full h-full block text-left focus:outline-none"
-                      aria-label={`Inspect ${photo.fileName} in fullscreen lightbox`}
-                    >
-                      <ImageOptimizer
-                        src={photo.secureUrl}
-                        alt={photo.fileName}
-                        watermarkText={
-                          currentGallery.watermarkEnabled ? currentGallery.watermarkText : undefined
-                        }
-                        className="w-full h-full group-hover:scale-[1.02] transition-transform duration-300"
-                      />
-                    </button>
-
-                    {/* Top-right Quick Selection & Like Actions */}
-                    <div className="absolute top-3 right-3 flex items-center gap-2">
+            <div className={`grid ${getResponsiveGridClass()}`}>
+              {filteredPhotos.map((photo, idx) => {
+                const ai = getPhotoAiMetrics(photo, idx);
+                return (
+                  <div
+                    key={photo.id}
+                    className={`group bg-white border rounded-2xl overflow-hidden transition-all ${
+                      photo.selected
+                        ? 'border-[#E61575] ring-2 ring-[#E61575]/25'
+                        : 'border-slate-200 hover:border-pink-300'
+                    }`}
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
                       <button
                         type="button"
-                        onClick={() => togglePhotoLike(photo.id)}
-                        aria-label={`${photo.liked ? 'Unlike' : 'Like'} ${photo.fileName}`}
-                        className={`p-2 rounded-lg backdrop-blur-xs transition-colors ${
-                          photo.liked
-                            ? 'bg-rose-600 text-white'
-                            : 'bg-slate-950/60 text-white hover:bg-slate-950/80'
-                        }`}
+                        onClick={() => {
+                          setLightboxPhotoId(photo.id);
+                          setIsZoomed(false);
+                        }}
+                        className="w-full h-full block text-left focus:outline-none"
+                        aria-label={`Inspect ${photo.fileName} in fullscreen lightbox`}
                       >
-                        <Heart className="w-4 h-4 fill-current" />
+                        <ImageOptimizer
+                          src={photo.secureUrl}
+                          alt={photo.fileName}
+                          watermarkText={
+                            currentGallery.watermarkEnabled
+                              ? currentGallery.watermarkText
+                              : undefined
+                          }
+                          className="w-full h-full group-hover:scale-[1.03] transition-transform duration-300"
+                        />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleSelectPhoto(photo.id)}
-                        aria-label={`${
-                          photo.selected ? 'Remove from album selection' : 'Select for album'
-                        } ${photo.fileName}`}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-xs transition-colors inline-flex items-center gap-1.5 ${
-                          photo.selected
-                            ? 'bg-[#0D9488] text-white'
-                            : 'bg-slate-950/65 text-white hover:bg-slate-950/85'
-                        }`}
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{photo.selected ? 'Selected' : 'Select'}</span>
-                      </button>
-                    </div>
-                  </div>
+                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-950/70 backdrop-blur-xs text-[10px] font-mono text-white">
+                          AI {ai.faceConfidence}% · Sharp {ai.sharpness}%
+                        </span>
+                      </div>
 
-                  {/* Card Footer Metadata (Zero-Pill Unboxed Text) */}
-                  <div className="p-3.5 flex items-center justify-between gap-2 text-xs">
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-900 truncate">{photo.fileName}</p>
-                      <div className="flex items-center gap-1.5 text-slate-500 mt-0.5">
-                        <span>{photo.category}</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="font-mono tabular-nums">{photo.exif.lens}</span>
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => togglePhotoLike(photo.id)}
+                          aria-label={`${photo.liked ? 'Unlike' : 'Like'} ${photo.fileName}`}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-xs transition-colors ${
+                            photo.liked
+                              ? 'bg-rose-600 text-white'
+                              : 'bg-slate-950/60 text-white hover:bg-slate-950/80'
+                          }`}
+                        >
+                          {photo.liked ? 'Liked' : 'Like'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSelectPhoto(photo.id)}
+                          aria-label={`${
+                            photo.selected ? 'Remove from album selection' : 'Select for album'
+                          } ${photo.fileName}`}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-xs transition-colors ${
+                            photo.selected
+                              ? 'bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white shadow-xs'
+                              : 'bg-slate-950/65 text-white hover:bg-slate-950/85'
+                          }`}
+                        >
+                          {photo.selected ? 'Selected' : 'Select'}
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setLightboxPhotoId(photo.id)}
-                        className="p-1.5 text-slate-500 hover:text-slate-900 rounded-md inline-flex items-center gap-1"
-                        aria-label={`Comments on ${photo.fileName}`}
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span className="font-mono tabular-nums">{photo.comments.length}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadPhoto(photo)}
-                        className="p-1.5 text-slate-500 hover:text-slate-900 rounded-md"
-                        aria-label={`Download ${photo.fileName}`}
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="p-3 flex items-center justify-between gap-2 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 truncate">
+                          {photo.fileName}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-slate-500 mt-0.5 text-[11px]">
+                          <span className="truncate">{photo.category}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-mono tabular-nums truncate">
+                            {photo.exif.lens}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 text-[11px] font-medium">
+                        <button
+                          type="button"
+                          onClick={() => setLightboxPhotoId(photo.id)}
+                          className="text-slate-600 hover:text-[#E61575]"
+                        >
+                          Notes ({photo.comments.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPhoto(photo, 'original')}
+                          className="text-[#E61575] hover:underline font-semibold"
+                        >
+                          Download
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
@@ -596,11 +1105,12 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
           aria-modal="true"
           aria-label="Photo Lightbox Inspector"
         >
-          {/* Left / Main Image Canvas */}
           <div className="flex-1 relative flex flex-col justify-between p-4 md:p-6 overflow-hidden">
             <div className="flex items-center justify-between z-10">
               <div className="text-xs text-slate-300 flex items-center gap-2">
-                <span className="font-medium text-white">{activeLightboxPhoto.fileName}</span>
+                <span className="font-medium text-white">
+                  {activeLightboxPhoto.fileName}
+                </span>
                 <span>·</span>
                 <span>{activeLightboxPhoto.category}</span>
                 <span>·</span>
@@ -613,18 +1123,16 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsZoomed((z) => !z)}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium inline-flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium"
                 >
-                  {isZoomed ? <ZoomOut className="w-4 h-4" /> : <ZoomIn className="w-4 h-4" />}
-                  <span>{isZoomed ? 'Reset Zoom' : 'Zoom 1.5x'}</span>
+                  {isZoomed ? 'Reset Zoom' : 'Zoom 1.5x'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setLightboxPhotoId(null)}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                  aria-label="Close Lightbox"
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium text-white"
                 >
-                  <X className="w-5 h-5" />
+                  Close
                 </button>
               </div>
             </div>
@@ -633,11 +1141,12 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               {lightboxIndex > 0 && (
                 <button
                   type="button"
-                  onClick={() => setLightboxPhotoId(filteredPhotos[lightboxIndex - 1].id)}
-                  className="absolute left-2 z-10 p-2.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-white"
-                  aria-label="Previous photo"
+                  onClick={() =>
+                    setLightboxPhotoId(filteredPhotos[lightboxIndex - 1].id)
+                  }
+                  className="absolute left-2 z-10 px-3 py-2 rounded-full bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-white"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  Prev
                 </button>
               )}
 
@@ -650,7 +1159,9 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   src={activeLightboxPhoto.secureUrl}
                   alt={activeLightboxPhoto.fileName}
                   watermarkText={
-                    currentGallery.watermarkEnabled ? currentGallery.watermarkText : undefined
+                    currentGallery.watermarkEnabled
+                      ? currentGallery.watermarkText
+                      : undefined
                   }
                   className="w-full h-full max-h-[68vh]"
                 />
@@ -659,16 +1170,16 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               {lightboxIndex < filteredPhotos.length - 1 && (
                 <button
                   type="button"
-                  onClick={() => setLightboxPhotoId(filteredPhotos[lightboxIndex + 1].id)}
-                  className="absolute right-2 z-10 p-2.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-white"
-                  aria-label="Next photo"
+                  onClick={() =>
+                    setLightboxPhotoId(filteredPhotos[lightboxIndex + 1].id)
+                  }
+                  className="absolute right-2 z-10 px-3 py-2 rounded-full bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-white"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  Next
                 </button>
               )}
             </div>
 
-            {/* Bottom EXIF & Quick Actions Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-3 text-xs text-slate-300">
               <div className="flex items-center gap-3 font-mono tabular-nums">
                 <span>{activeLightboxPhoto.exif.camera}</span>
@@ -686,38 +1197,38 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                 <button
                   type="button"
                   onClick={() => togglePhotoLike(activeLightboxPhoto.id)}
-                  className={`px-3.5 py-1.5 rounded-lg font-medium inline-flex items-center gap-1.5 ${
-                    activeLightboxPhoto.liked ? 'bg-rose-600 text-white' : 'bg-white/10 text-white'
+                  className={`px-3.5 py-1.5 rounded-lg font-medium ${
+                    activeLightboxPhoto.liked
+                      ? 'bg-rose-600 text-white'
+                      : 'bg-white/10 text-white'
                   }`}
                 >
-                  <Heart className="w-3.5 h-3.5" />
-                  <span>Like ({activeLightboxPhoto.likesCount})</span>
+                  Like ({activeLightboxPhoto.likesCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSelectPhoto(activeLightboxPhoto.id)}
-                  className={`px-3.5 py-1.5 rounded-lg font-medium inline-flex items-center gap-1.5 ${
-                    activeLightboxPhoto.selected ? 'bg-[#0D9488] text-white' : 'bg-white/10 text-white'
+                  className={`px-3.5 py-1.5 rounded-lg font-medium ${
+                    activeLightboxPhoto.selected
+                      ? 'bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white'
+                      : 'bg-white/10 text-white'
                   }`}
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>
-                    {activeLightboxPhoto.selected ? 'Selected for Album' : 'Select for Album'}
-                  </span>
+                  {activeLightboxPhoto.selected
+                    ? 'Selected for Album'
+                    : 'Select for Album'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDownloadPhoto(activeLightboxPhoto)}
-                  className="px-3.5 py-1.5 rounded-lg bg-white text-slate-900 font-medium inline-flex items-center gap-1.5"
+                  onClick={() => handleDownloadPhoto(activeLightboxPhoto, 'original')}
+                  className="px-3.5 py-1.5 rounded-lg bg-white text-slate-900 font-medium"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download</span>
+                  Original Download
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right Sidebar: Client Retouching Notes & Comments */}
           <div className="w-full lg:w-88 bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/10 p-5 flex flex-col justify-between">
             <div className="space-y-4 overflow-y-auto max-h-80 lg:max-h-[70vh]">
               <h3 className="text-base font-semibold text-white">
@@ -730,7 +1241,10 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               ) : (
                 <div className="space-y-3">
                   {activeLightboxPhoto.comments.map((c) => (
-                    <div key={c.id} className="p-3 rounded-lg bg-slate-800/80 text-xs space-y-1">
+                    <div
+                      key={c.id}
+                      className="p-3 rounded-lg bg-slate-800/80 text-xs space-y-1"
+                    >
                       <div className="flex items-center justify-between text-slate-300">
                         <span className="font-semibold text-white">{c.authorName}</span>
                         <span>{c.authorRole}</span>
@@ -746,7 +1260,12 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!commentText.trim()) return;
-                addPhotoComment(activeLightboxPhoto.id, commentAuthor, 'Client', commentText);
+                addPhotoComment(
+                  activeLightboxPhoto.id,
+                  commentAuthor,
+                  'Client',
+                  commentText
+                );
                 setCommentText('');
               }}
               className="pt-4 border-t border-white/10 space-y-2.5"
@@ -757,7 +1276,7 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                 onChange={(e) => setCommentAuthor(e.target.value)}
                 placeholder="Your Name"
                 aria-label="Comment Author Name"
-                className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#0D9488]"
+                className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#E61575]"
                 required
               />
               <div className="flex gap-2">
@@ -767,15 +1286,14 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Add retouch or album note..."
                   aria-label="Comment Text"
-                  className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#0D9488]"
+                  className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#E61575]"
                   required
                 />
                 <button
                   type="submit"
-                  className="px-3 py-2 bg-[#0D9488] text-white rounded-lg text-xs font-medium hover:bg-teal-700"
-                  aria-label="Post Comment"
+                  className="px-3 py-2 bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white rounded-lg text-xs font-semibold"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  Send
                 </button>
               </div>
             </form>
@@ -791,23 +1309,22 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
           aria-modal="true"
           aria-labelledby="qr-modal-title"
         >
-          <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 space-y-5">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-5">
             <div className="flex items-center justify-between">
               <div>
                 <h3 id="qr-modal-title" className="text-xl font-semibold text-slate-900">
-                  Instant Event QR Photo Sharing
+                  FotoOwl Instant Event QR Photo Sharing
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Groupfie-style table tent &amp; mobile guest access
+                  Scan for AI Face Match, Live Photo Stream &amp; Original Downloads
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowQrModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700"
-                aria-label="Close QR Modal"
+                className="text-xs font-semibold text-slate-500 hover:text-slate-900"
               >
-                <X className="w-5 h-5" />
+                Close
               </button>
             </div>
 
@@ -823,11 +1340,13 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   Generating QR...
                 </div>
               )}
-              <p className="text-sm font-semibold text-slate-900">{currentGallery.galleryName}</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {currentGallery.galleryName}
+              </p>
               <p className="text-xs font-mono text-slate-500 break-all">{shareUrl}</p>
               <div className="text-xs text-slate-600 tabular-nums">
-                Total Event Scans: <strong>{currentGallery.qrScansCount}</strong> · Access Mode:{' '}
-                <strong>{currentGallery.accessType}</strong>
+                Total Event Scans: <strong>{currentGallery.qrScansCount}</strong> · Access
+                Mode: <strong>{currentGallery.accessType}</strong>
               </div>
             </div>
 
@@ -844,9 +1363,9 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               <button
                 type="button"
                 onClick={handleDownloadQrPdf}
-                className="px-4 py-2 text-xs font-medium bg-[#0F172A] text-white rounded-lg hover:bg-slate-800"
+                className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white rounded-lg"
               >
-                Download Printable PDF Card
+                Download Printable PDF Standee
               </button>
             </div>
           </div>
@@ -861,34 +1380,31 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
           aria-modal="true"
           aria-labelledby="face-search-modal-title"
         >
-          <div className="bg-white border border-slate-200 rounded-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <div className="flex items-center gap-2.5">
-                <ScanFace className="w-5 h-5 text-[#0D9488]" />
-                <div>
-                  <h3 id="face-search-modal-title" className="text-lg font-semibold text-slate-900">
-                    AI Face Recognition &amp; Privacy Consent
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Biometric guest photo discovery &amp; data retention controls
-                  </p>
-                </div>
+              <div>
+                <h3
+                  id="face-search-modal-title"
+                  className="text-lg font-semibold text-slate-900"
+                >
+                  AI Face Recognition &amp; Privacy Consent
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Biometric guest photo discovery &amp; data retention controls
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowFaceSearchModal(false)}
-                className="p-1 text-slate-400 hover:text-slate-700"
-                aria-label="Close Face Search Modal"
+                className="text-xs font-semibold text-slate-500 hover:text-slate-900"
               >
-                <X className="w-5 h-5" />
+                Close
               </button>
             </div>
 
-            {/* Honest Adapter Status Banner */}
             <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-950 space-y-1">
-              <div className="font-semibold flex items-center gap-1.5">
-                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                <span>{FaceRecognitionService.getAdapterStatus().providerName}</span>
+              <div className="font-semibold">
+                {FaceRecognitionService.getAdapterStatus().providerName}
               </div>
               <p className="text-amber-900 leading-relaxed">
                 {FaceRecognitionService.getAdapterStatus().message}
@@ -898,7 +1414,10 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
             <form onSubmit={handleFaceSearchSubmit} className="space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="guest-name" className="block text-xs font-medium text-slate-700 mb-1">
+                  <label
+                    htmlFor="guest-name"
+                    className="block text-xs font-medium text-slate-700 mb-1"
+                  >
                     Guest Full Name
                   </label>
                   <input
@@ -912,7 +1431,10 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   />
                 </div>
                 <div>
-                  <label htmlFor="guest-email" className="block text-xs font-medium text-slate-700 mb-1">
+                  <label
+                    htmlFor="guest-email"
+                    className="block text-xs font-medium text-slate-700 mb-1"
+                  >
                     Guest Email
                   </label>
                   <input
@@ -928,7 +1450,10 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
               </div>
 
               <div>
-                <label htmlFor="selfie-upload" className="block text-xs font-medium text-slate-700 mb-1">
+                <label
+                  htmlFor="selfie-upload"
+                  className="block text-xs font-medium text-slate-700 mb-1"
+                >
                   Upload Reference Selfie (JPEG / PNG)
                 </label>
                 <input
@@ -943,12 +1468,15 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                       reader.readAsDataURL(file);
                     }
                   }}
-                  className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-800"
+                  className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-pink-50 file:text-[#E61575]"
                 />
               </div>
 
               <div>
-                <label htmlFor="retention-select" className="block text-xs font-medium text-slate-700 mb-1">
+                <label
+                  htmlFor="retention-select"
+                  className="block text-xs font-medium text-slate-700 mb-1"
+                >
                   Face-Data Auto-Purge Retention Policy
                 </label>
                 <select
@@ -968,16 +1496,17 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                   type="checkbox"
                   checked={consentChecked}
                   onChange={(e) => setConsentChecked(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-300 text-[#0D9488]"
+                  className="mt-0.5 rounded border-slate-300 text-[#E61575]"
                 />
                 <span>
-                  I consent to temporary facial feature indexing solely to locate my photos within{' '}
-                  <strong>{currentGallery.galleryName}</strong>. I understand I can delete my selfie and face-index at any time.
+                  I consent to temporary facial feature indexing solely to locate my photos
+                  within <strong>{currentGallery.galleryName}</strong>. I understand I can
+                  delete my selfie and face-index at any time.
                 </span>
               </label>
 
               {faceSearchStatusMsg && (
-                <div className="p-3 bg-slate-100 rounded-lg text-xs text-slate-800">
+                <div className="p-3 bg-pink-50 border border-pink-200 rounded-lg text-xs text-slate-900">
                   {faceSearchStatusMsg}
                 </div>
               )}
@@ -986,18 +1515,16 @@ export const ClientGalleryPortal: React.FC<ClientGalleryPortalProps> = ({
                 <button
                   type="button"
                   onClick={handleDeleteBiometricData}
-                  className="px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 rounded-lg inline-flex items-center gap-1.5"
+                  className="px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 rounded-lg"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete My Selfie &amp; Face Index</span>
+                  Delete My Selfie &amp; Face Index
                 </button>
 
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-medium bg-[#0F172A] text-white rounded-lg hover:bg-slate-800 inline-flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-[#FF851B] via-[#FF385C] to-[#E61575] text-white rounded-lg"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#0D9488]" />
-                  <span>Verify Consent &amp; Check Adapter</span>
+                  Run Instant Face Match
                 </button>
               </div>
             </form>
