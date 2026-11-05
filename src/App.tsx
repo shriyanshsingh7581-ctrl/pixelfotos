@@ -5,7 +5,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
-import { ComingSoonPage } from './pages/ComingSoonPage';
 import { LandingPage } from './pages/LandingPage';
 import {
   DashboardTabId,
@@ -15,13 +14,10 @@ import { StudioOnboardingModal } from './components/dashboard/StudioOnboardingMo
 import { OfflineIndicator } from './components/PWAInstallButton';
 
 export default function App() {
-  const [activeView, setActiveView] = useState<'coming_soon' | 'landing' | 'dashboard'>(() => {
+  const [activeView, setActiveView] = useState<'landing' | 'dashboard'>(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('autostart') === '1' || params.get('gallery')) {
       return 'dashboard';
-    }
-    if (params.get('preview') === 'coming_soon') {
-      return 'coming_soon';
     }
     return 'landing';
   });
@@ -38,14 +34,8 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('autostart') === '1') {
       setActiveView('dashboard');
-    } else if (params.get('preview') === 'coming_soon') {
-      setActiveView('coming_soon');
     }
   }, []);
-
-  if (activeView === 'coming_soon') {
-    return <ComingSoonPage />;
-  }
 
   return (
     <AuthProvider>
