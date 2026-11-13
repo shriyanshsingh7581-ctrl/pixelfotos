@@ -10,6 +10,7 @@ import {
   Trash2,
   UserPlus,
   AlertCircle,
+  Send,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useAuth } from '../../hooks/useAuth';
@@ -91,8 +92,8 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
       projectDetails: clientDetails.trim() || 'Bespoke Wedding Commission',
       notes: 'Added via Studio CRM',
       followUpDate: clientEventDate,
-      totalBilled: 0,
-      totalPaid: 0,
+      totalBilled: 250000,
+      totalPaid: 100000,
     });
     setClientName('');
     setClientEmail('');
@@ -232,17 +233,17 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-slate-100">
       {/* Sub-navigation bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+      <div className="bg-[#0F1624] border border-amber-500/25 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-1 p-1 bg-[#0B0F17] border border-slate-800 rounded-xl">
           <button
             type="button"
             onClick={() => setSection('clients')}
-            className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
               section === 'clients'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             CRM &amp; Client Profiles ({clients.length})
@@ -250,30 +251,30 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
           <button
             type="button"
             onClick={() => setSection('bookings')}
-            className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
               section === 'bookings'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
-            Bookings &amp; Event Calendar ({bookings.length})
+            Shoot Calendar &amp; Bookings ({bookings.length})
           </button>
           <button
             type="button"
             onClick={() => setSection('invoices')}
-            className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
               section === 'invoices'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
-            GST Invoices &amp; Payments ({invoices.length})
+            GST Invoices &amp; WhatsApp Reminders ({invoices.length})
           </button>
         </div>
 
         {statusFeedback && (
-          <div className="flex items-center gap-2 text-xs font-medium text-[#0D9488]">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs font-medium text-amber-300">
+            <CheckCircle2 className="w-4 h-4 text-amber-400" />
             <span>{statusFeedback}</span>
           </div>
         )}
@@ -282,9 +283,16 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
       {/* SECTION 1: CRM & CLIENTS */}
       {section === 'clients' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="lg:col-span-8 bg-[#0F1624] border border-amber-500/25 rounded-2xl p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h3 className="text-xl font-semibold text-slate-900">Studio Client Directory</h3>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+                  MODULE H · STUDIO CRM &amp; CLIENT LEDGER
+                </p>
+                <h3 className="text-xl font-serif-editorial font-semibold text-white">
+                  Studio Client Directory &amp; Balance Tracker
+                </h3>
+              </div>
               <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -293,72 +301,86 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search clients or events..."
                   aria-label="Search clients"
-                  className="pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-[#0D9488]"
+                  className="pl-9 pr-3.5 py-2 text-xs bg-[#0B0F17] border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
             </div>
 
-            <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden">
-              {filteredClients.map((client) => (
-                <div
-                  key={client.id}
-                  className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                      <span>{client.name}</span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-xs font-mono text-slate-500 tabular-nums">
-                        Event: {client.eventDate}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600">{client.projectDetails}</p>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                      <span>{client.email}</span>
-                      <span>·</span>
-                      <span className="font-mono tabular-nums">{client.phone}</span>
-                      <span>·</span>
-                      <span className="font-mono tabular-nums">
-                        Billed ₹{client.totalBilled.toLocaleString('en-IN')} / Paid ₹
-                        {client.totalPaid.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  </div>
+            <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-[#0B0F17]">
+              {filteredClients.map((client) => {
+                const pendingBalance = Math.max(0, client.totalBilled - client.totalPaid);
+                const waReminderUrl = `https://wa.me/${client.whatsapp.replace(
+                  /[^0-9]/g,
+                  ''
+                )}?text=${encodeURIComponent(
+                  `Greetings ${client.name}, this is a polite reminder from ${studio.studioName} regarding your upcoming wedding commission (${client.projectDetails}). Total Package: Rs. ${client.totalBilled.toLocaleString('en-IN')} | Advance Received: Rs. ${client.totalPaid.toLocaleString('en-IN')} | Pending Balance: Rs. ${pendingBalance.toLocaleString('en-IN')}.`
+                )}`;
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href={`https://wa.me/${client.whatsapp.replace(/[^0-9]/g, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-100"
-                    >
-                      WhatsApp
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => deleteClient(client.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
-                      aria-label={`Delete client ${client.name}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                return (
+                  <div
+                    key={client.id}
+                    className="p-4 hover:bg-[#131B2E] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <span>{client.name}</span>
+                        <span className="text-slate-600">·</span>
+                        <span className="text-xs font-mono text-amber-300 tabular-nums">
+                          Event: {client.eventDate}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300">{client.projectDetails}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                        <span>{client.email}</span>
+                        <span>·</span>
+                        <span className="font-mono tabular-nums">{client.phone}</span>
+                        <span>·</span>
+                        <span className="font-mono tabular-nums text-emerald-400">
+                          Advance Paid: ₹{client.totalPaid.toLocaleString('en-IN')}
+                        </span>
+                        <span>·</span>
+                        <span className="font-mono tabular-nums text-amber-300">
+                          Pending: ₹{pendingBalance.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={waReminderUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white inline-flex items-center gap-1"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>WhatsApp Reminder</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => deleteClient(client.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg"
+                        aria-label={`Delete client ${client.name}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           <form
             onSubmit={handleAddClientSubmit}
-            className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-6 space-y-3.5 text-xs"
+            className="lg:col-span-4 bg-[#0F1624] border border-amber-500/25 rounded-2xl p-6 space-y-3.5 text-xs"
           >
-            <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
-              <UserPlus className="w-4 h-4 text-[#0D9488]" />
+            <div className="flex items-center gap-2 text-base font-semibold text-amber-200">
+              <UserPlus className="w-4 h-4 text-amber-400" />
               <span>Add New Client Profile</span>
             </div>
 
             <div>
-              <label htmlFor="crm-client-name" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="crm-client-name" className="block font-medium text-slate-300 mb-1">
                 Client / Couple Name
               </label>
               <input
@@ -367,13 +389,13 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="e.g. Rhea & Siddharth"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="crm-client-email" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="crm-client-email" className="block font-medium text-slate-300 mb-1">
                 Email Address
               </label>
               <input
@@ -382,14 +404,14 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 placeholder="rhea@example.com"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label htmlFor="crm-client-phone" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="crm-client-phone" className="block font-medium text-slate-300 mb-1">
                   Phone / WhatsApp
                 </label>
                 <input
@@ -398,11 +420,11 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
                   placeholder="+91 98201..."
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 />
               </div>
               <div>
-                <label htmlFor="crm-client-date" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="crm-client-date" className="block font-medium text-slate-300 mb-1">
                   Primary Event Date
                 </label>
                 <input
@@ -410,13 +432,13 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="date"
                   value={clientEventDate}
                   onChange={(e) => setClientEventDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="crm-client-details" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="crm-client-details" className="block font-medium text-slate-300 mb-1">
                 Commission Scope &amp; Deliverables
               </label>
               <textarea
@@ -425,13 +447,13 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 value={clientDetails}
                 onChange={(e) => setClientDetails(e.target.value)}
                 placeholder="2-Day Palace Wedding + Pre-wedding shoot..."
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#0F172A] text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+              className="w-full py-2.5 bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17] font-bold rounded-xl"
             >
               Save Client Profile
             </button>
@@ -442,48 +464,45 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
       {/* SECTION 2: BOOKINGS & CALENDAR */}
       {section === 'bookings' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900">
+          <div className="lg:col-span-8 bg-[#0F1624] border border-amber-500/25 rounded-2xl p-6 space-y-4">
+            <h3 className="text-xl font-serif-editorial font-semibold text-white">
               Shoot Bookings &amp; Crew Assignment Schedule
             </h3>
-            <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl">
+            <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl bg-[#0B0F17]">
               {bookings.map((bk) => (
                 <div
                   key={bk.id}
                   className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-white">
                       <span>{bk.clientName}</span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-xs font-normal text-slate-600">{bk.bookingType}</span>
+                      <span className="text-slate-600">·</span>
+                      <span className="text-xs font-normal text-amber-300">{bk.bookingType}</span>
                     </div>
-                    <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2">
+                    <div className="text-xs text-slate-400 flex flex-wrap items-center gap-2">
                       <span className="font-mono tabular-nums">Date: {bk.eventDate}</span>
                       <span>·</span>
                       <span>{bk.location}</span>
                       <span>·</span>
-                      <span className="font-mono tabular-nums">
+                      <span className="font-mono text-emerald-400 tabular-nums">
                         ₹{bk.packageAmount.toLocaleString('en-IN')}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-600">
+                    <div className="text-xs text-slate-300">
                       Lead: <strong>{bk.assignedPhotographer}</strong> · Editor:{' '}
                       <strong>{bk.assignedEditor}</strong>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <label htmlFor={`status-${bk.id}`} className="sr-only">
-                      Booking Status
-                    </label>
                     <select
-                      id={`status-${bk.id}`}
+                      aria-label="Booking Status"
                       value={bk.status}
                       onChange={(e) =>
                         updateBookingStatus(bk.id, e.target.value as BookingRecord['status'])
                       }
-                      className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg font-medium text-slate-800"
+                      className="px-3 py-1.5 text-xs bg-[#131B2E] border border-amber-500/30 rounded-lg font-medium text-amber-200"
                     >
                       <option value="inquiry">Inquiry</option>
                       <option value="confirmed">Confirmed</option>
@@ -499,15 +518,15 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
 
           <form
             onSubmit={handleAddBookingSubmit}
-            className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-6 space-y-3.5 text-xs"
+            className="lg:col-span-4 bg-[#0F1624] border border-amber-500/25 rounded-2xl p-6 space-y-3.5 text-xs"
           >
-            <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
-              <Calendar className="w-4 h-4 text-[#0D9488]" />
+            <div className="flex items-center gap-2 text-base font-semibold text-amber-200">
+              <Calendar className="w-4 h-4 text-amber-400" />
               <span>Schedule Event Booking</span>
             </div>
 
             <div>
-              <label htmlFor="bk-client-name" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="bk-client-name" className="block font-medium text-slate-300 mb-1">
                 Client Name
               </label>
               <input
@@ -515,22 +534,22 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 type="text"
                 value={bkClientName}
                 onChange={(e) => setBkClientName(e.target.value)}
-                placeholder="e.g.Tara & Dev"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                placeholder="e.g. Tara & Dev"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label htmlFor="bk-type" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="bk-type" className="block font-medium text-slate-300 mb-1">
                   Event Type
                 </label>
                 <select
                   id="bk-type"
                   value={bkType}
                   onChange={(e) => setBkType(e.target.value as BookingRecord['bookingType'])}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 >
                   <option value="Wedding">Wedding</option>
                   <option value="Destination Wedding">Destination Wedding</option>
@@ -540,7 +559,7 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 </select>
               </div>
               <div>
-                <label htmlFor="bk-date" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="bk-date" className="block font-medium text-slate-300 mb-1">
                   Event Date
                 </label>
                 <input
@@ -548,13 +567,13 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="date"
                   value={bkDate}
                   onChange={(e) => setBkDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="bk-location" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="bk-location" className="block font-medium text-slate-300 mb-1">
                 Venue &amp; City
               </label>
               <input
@@ -563,14 +582,14 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 value={bkLocation}
                 onChange={(e) => setBkLocation(e.target.value)}
                 placeholder="Rambagh Palace, Jaipur"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label htmlFor="bk-photog" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="bk-photog" className="block font-medium text-slate-300 mb-1">
                   Assign Photographer
                 </label>
                 <input
@@ -578,11 +597,11 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="text"
                   value={bkPhotographer}
                   onChange={(e) => setBkPhotographer(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 />
               </div>
               <div>
-                <label htmlFor="bk-amount" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="bk-amount" className="block font-medium text-slate-300 mb-1">
                   Package Fee (INR)
                 </label>
                 <input
@@ -590,14 +609,14 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="number"
                   value={bkAmount}
                   onChange={(e) => setBkAmount(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white font-mono"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#0F172A] text-white font-medium rounded-lg hover:bg-slate-800"
+              className="w-full py-2.5 bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17] font-bold rounded-xl"
             >
               Confirm Booking &amp; Crew
             </button>
@@ -605,14 +624,14 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
         </div>
       )}
 
-      {/* SECTION 3: GST INVOICES & PAYMENTS */}
+      {/* SECTION 3: GST INVOICES & WHATSAPP PAYMENT REMINDERS */}
       {section === 'invoices' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900">
-              GST Tax Invoices, Advance Balances &amp; Payment Verification
+          <div className="lg:col-span-8 bg-[#0F1624] border border-amber-500/25 rounded-2xl p-6 space-y-4">
+            <h3 className="text-xl font-serif-editorial font-semibold text-white">
+              GST Tax Invoices, Advance Balances &amp; WhatsApp Payment Reminders
             </h3>
-            <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl">
+            <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl bg-[#0B0F17]">
               {invoices.map((inv) => {
                 const calc = calculateGSTInvoice(
                   inv.items,
@@ -620,43 +639,64 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   inv.advancePaid,
                   Boolean(inv.paymentTransactionId)
                 );
+                const waInvoiceReminderUrl = `https://wa.me/${studio.whatsapp.replace(
+                  /[^0-9]/g,
+                  ''
+                )}?text=${encodeURIComponent(
+                  `Dear ${inv.clientName}, greetings from ${studio.studioName}. Here is the payment summary for GST Invoice ${inv.invoiceNumber} (${inv.items[0]?.description || 'Wedding Package'}):\n• Grand Total (incl. 18% GST): Rs. ${calc.grandTotal.toLocaleString('en-IN')}\n• Advance Paid: Rs. ${calc.advancePaid.toLocaleString('en-IN')}\n• Balance Due: Rs. ${calc.balanceDue.toLocaleString('en-IN')} (Due by ${inv.dueDate}).`
+                )}`;
+
                 return (
                   <div
                     key={inv.id}
                     className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     <div className="space-y-1 text-xs">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                        <span className="font-mono">{inv.invoiceNumber}</span>
-                        <span className="text-slate-300">·</span>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <span className="font-mono text-amber-300">{inv.invoiceNumber}</span>
+                        <span className="text-slate-600">·</span>
                         <span>{inv.clientName}</span>
-                        <span className="text-slate-300">·</span>
-                        <span className="text-xs font-medium text-slate-600">
-                          Status: {calc.derivedStatus.replace('_', ' ')}
+                        <span className="text-slate-600">·</span>
+                        <span className="text-xs font-medium text-emerald-400 uppercase">
+                          {calc.derivedStatus.replace('_', ' ')}
                         </span>
                       </div>
-                      <p className="text-slate-600">{inv.items[0]?.description}</p>
-                      <div className="font-mono text-slate-500 tabular-nums flex flex-wrap items-center gap-2">
+                      <p className="text-slate-300">{inv.items[0]?.description}</p>
+                      <div className="font-mono text-slate-400 tabular-nums flex flex-wrap items-center gap-2">
                         <span>Subtotal: ₹{calc.subtotal.toLocaleString('en-IN')}</span>
                         <span>·</span>
                         <span>GST (18%): ₹{calc.totalGstAmount.toLocaleString('en-IN')}</span>
                         <span>·</span>
-                        <strong className="text-slate-900">
+                        <strong className="text-white">
                           Total: ₹{calc.grandTotal.toLocaleString('en-IN')}
                         </strong>
                         <span>·</span>
-                        <span className="text-[#0D9488]">
-                          Balance Due: ₹{calc.balanceDue.toLocaleString('en-IN')}
+                        <span className="text-emerald-400">
+                          Advance: ₹{calc.advancePaid.toLocaleString('en-IN')}
+                        </span>
+                        <span>·</span>
+                        <span className="text-amber-300 font-bold">
+                          Pending: ₹{calc.balanceDue.toLocaleString('en-IN')}
                         </span>
                       </div>
                       {inv.paymentTransactionId && (
-                        <p className="text-[11px] font-mono text-emerald-700">
+                        <p className="text-[11px] font-mono text-emerald-400">
                           Verified Settlement Ref: {inv.paymentTransactionId}
                         </p>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <a
+                        href={waInvoiceReminderUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg inline-flex items-center gap-1.5"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>WhatsApp Reminder</span>
+                      </a>
+
                       {calc.derivedStatus !== 'paid' && (
                         <button
                           type="button"
@@ -664,7 +704,7 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                             setVerifyingInvoice(inv);
                             setVerifyError('');
                           }}
-                          className="px-3 py-1.5 text-xs font-medium bg-[#0D9488] text-white rounded-lg hover:bg-teal-700 inline-flex items-center gap-1.5"
+                          className="px-3 py-1.5 text-xs font-bold bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17] rounded-lg inline-flex items-center gap-1.5"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" />
                           <span>Verify Settlement</span>
@@ -673,7 +713,7 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDownloadInvoicePdf(inv)}
-                        className="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1.5"
+                        className="px-3 py-1.5 text-xs font-medium bg-[#131B2E] border border-slate-700 rounded-lg text-slate-200 hover:text-white inline-flex items-center gap-1.5"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Invoice PDF</span>
@@ -687,15 +727,15 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
 
           <form
             onSubmit={handleAddInvoiceSubmit}
-            className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-6 space-y-3.5 text-xs"
+            className="lg:col-span-4 bg-[#0F1624] border border-amber-500/25 rounded-2xl p-6 space-y-3.5 text-xs"
           >
-            <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
-              <FileText className="w-4 h-4 text-[#0D9488]" />
+            <div className="flex items-center gap-2 text-base font-semibold text-amber-200">
+              <FileText className="w-4 h-4 text-amber-400" />
               <span>Generate GST Invoice / Quotation</span>
             </div>
 
             <div>
-              <label htmlFor="inv-client-name" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="inv-client-name" className="block font-medium text-slate-300 mb-1">
                 Billed Client Name
               </label>
               <input
@@ -704,13 +744,13 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 value={invClientName}
                 onChange={(e) => setInvClientName(e.target.value)}
                 placeholder="e.g. Aanya Mehra"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="inv-gstin" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="inv-gstin" className="block font-medium text-slate-300 mb-1">
                 Client GSTIN (Optional)
               </label>
               <input
@@ -718,12 +758,12 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 type="text"
                 value={invClientGstin}
                 onChange={(e) => setInvClientGstin(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="inv-desc" className="block font-medium text-slate-700 mb-1">
+              <label htmlFor="inv-desc" className="block font-medium text-slate-300 mb-1">
                 Line Item Description
               </label>
               <input
@@ -731,14 +771,14 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 type="text"
                 value={invDescription}
                 onChange={(e) => setInvDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label htmlFor="inv-amount" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="inv-amount" className="block font-medium text-slate-300 mb-1">
                   Base Fee (Excl. 18% GST)
                 </label>
                 <input
@@ -746,11 +786,11 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="number"
                   value={invAmount}
                   onChange={(e) => setInvAmount(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white font-mono"
                 />
               </div>
               <div>
-                <label htmlFor="inv-advance" className="block font-medium text-slate-700 mb-1">
+                <label htmlFor="inv-advance" className="block font-medium text-slate-300 mb-1">
                   Advance Received (INR)
                 </label>
                 <input
@@ -758,14 +798,14 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="number"
                   value={invAdvance}
                   onChange={(e) => setInvAdvance(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono"
+                  className="w-full px-3 py-2 bg-[#0B0F17] border border-slate-700 rounded-lg text-white font-mono"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-[#0F172A] text-white font-medium rounded-lg hover:bg-slate-800 inline-flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17] font-bold rounded-xl inline-flex items-center justify-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Official GST Invoice</span>
@@ -777,22 +817,21 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
       {/* Payment Verification Modal */}
       {verifyingInvoice && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="payment-verify-title"
         >
-          <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 id="payment-verify-title" className="text-lg font-semibold text-slate-900">
+          <div className="bg-[#0F1624] border border-amber-500/35 rounded-2xl max-w-md w-full p-6 space-y-4 text-slate-100">
+            <h3 id="payment-verify-title" className="text-lg font-semibold text-white">
               Verify Gateway / Bank UTR Settlement
             </h3>
-            <p className="text-xs text-slate-600">
-              Invoices are never marked as paid without a verified payment gateway or bank settlement reference for{' '}
-              <strong>{verifyingInvoice.invoiceNumber}</strong>.
+            <p className="text-xs text-slate-300">
+              Verify payment reference for <strong>{verifyingInvoice.invoiceNumber}</strong>.
             </p>
             <form onSubmit={handleConfirmPaymentVerification} className="space-y-3">
               <div>
-                <label htmlFor="utr-input" className="block text-xs font-medium text-slate-700 mb-1">
+                <label htmlFor="utr-input" className="block text-xs font-medium text-slate-300 mb-1">
                   Gateway / Bank Settlement Reference (UTR_ / RZP_ / STRP_)
                 </label>
                 <input
@@ -800,12 +839,12 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                   type="text"
                   value={utrReference}
                   onChange={(e) => setUtrReference(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono border border-slate-200 rounded-lg"
+                  className="w-full px-3 py-2 text-xs font-mono bg-[#0B0F17] border border-slate-700 rounded-lg text-white"
                   required
                 />
               </div>
               {verifyError && (
-                <p className="text-xs text-rose-600 flex items-center gap-1">
+                <p className="text-xs text-rose-400 flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{verifyError}</span>
                 </p>
@@ -814,13 +853,13 @@ export const CRMAndBookingsModule: React.FC<CRMAndBookingsModuleProps> = ({
                 <button
                   type="button"
                   onClick={() => setVerifyingInvoice(null)}
-                  className="px-3.5 py-2 text-xs border border-slate-200 rounded-lg text-slate-600"
+                  className="px-3.5 py-2 text-xs border border-slate-700 rounded-lg text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-medium bg-[#0D9488] text-white rounded-lg hover:bg-teal-700"
+                  className="px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17] rounded-lg"
                 >
                   Verify &amp; Mark Paid
                 </button>

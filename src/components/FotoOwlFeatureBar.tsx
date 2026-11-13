@@ -19,15 +19,13 @@ interface FotoOwlFeatureBarProps {
 }
 
 /**
- * Exact recreation of the FotoOwl "AI-Powered Live Event Photo Matching" UI
- * from the user's reference image:
- * - Circular orange-to-magenta gradient icons (#FF8314 -> #FF385C -> #E81776)
- * - Crisp white vector line icons:
- *   1. Instant Face Match (viewfinder brackets + person silhouette)
- *   2. Smart Auto-Culling (overlapping photo frames + checkmark badge)
- *   3. Live Upload Updates (cloud with upward arrow)
- *   4. Original Quality Downloads (download tray with downward arrow)
- * - Vertical coral/pink separator lines between items
+ * Exact structure & 4-button layout of the FotoOwl "AI-Powered Live Event Photo Matching"
+ * Bottom Navigation Bar, updated ONLY with the Luxury Dark/Gold & Clean Editorial Studio
+ * color palette, border glow, and active states:
+ * 1. Instant Face Match (viewfinder brackets + person silhouette)
+ * 2. Smart Auto-Culling (overlapping photo frames + checkmark badge)
+ * 3. Live Upload Updates (cloud with upward arrow)
+ * 4. Original Quality Downloads (download tray with downward arrow)
  */
 export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
   activeMode,
@@ -141,7 +139,7 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
             cx="32.5"
             cy="31.5"
             r="6.5"
-            fill="#F12768"
+            fill="#B45309"
             stroke="white"
             strokeWidth="2.6"
           />
@@ -238,7 +236,7 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
     return (
       <nav
         aria-label="FotoOwl Live Event Bottom Navigation"
-        className="fixed bottom-0 inset-x-0 z-40 bg-white/98 backdrop-blur-md border-t border-pink-200/80 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] px-1.5 py-2 md:px-6 md:py-2.5"
+        className="fixed bottom-0 inset-x-0 z-40 bg-[#0B0F17]/95 backdrop-blur-xl border-t border-amber-500/35 shadow-[0_-10px_40px_rgba(212,175,55,0.16)] px-1.5 py-2 md:px-6 md:py-2.5"
       >
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-4 items-center">
@@ -249,11 +247,11 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
                   key={item.id}
                   className="relative flex items-center justify-center"
                 >
-                  {/* Vertical Coral/Pink Separator matching screenshot */}
+                  {/* Vertical Champagne Gold Separator matching reference structure */}
                   {index > 0 && (
                     <div
                       aria-hidden="true"
-                      className="absolute left-0 top-1.5 bottom-1.5 w-[1.5px] bg-gradient-to-b from-[#FF7A18]/30 via-[#E61972]/55 to-[#E61972]/30"
+                      className="absolute left-0 top-1.5 bottom-1.5 w-[1.5px] bg-gradient-to-b from-amber-500/15 via-amber-400/55 to-amber-500/15"
                     />
                   )}
 
@@ -265,15 +263,15 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
                     }`}
                   >
                     <div
-                      className={`relative w-11 h-11 sm:w-12 sm:h-12 md:w-13 md:h-13 rounded-full bg-gradient-to-b from-[#FF851B] via-[#FF385C] to-[#E61575] flex items-center justify-center shadow-md transition-all ${
+                      className={`relative w-11 h-11 sm:w-12 sm:h-12 md:w-13 md:h-13 rounded-full bg-gradient-to-b from-[#F59E0B] via-[#D97706] to-[#92400E] flex items-center justify-center shadow-md transition-all ${
                         isSelected
-                          ? 'ring-3 ring-[#E61575]/35 shadow-pink-500/30'
-                          : 'group-hover:shadow-lg'
+                          ? 'ring-3 ring-amber-400/70 shadow-[0_0_24px_rgba(245,158,11,0.45)]'
+                          : 'ring-1 ring-amber-300/25 group-hover:shadow-[0_0_18px_rgba(245,158,11,0.3)]'
                       }`}
                     >
                       {item.renderIcon('w-6 h-6 sm:w-7 sm:h-7')}
                       {item.badge !== undefined && Number(item.badge) > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0F172A] text-white text-[10px] font-bold font-mono flex items-center justify-center border border-white">
+                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0B0F17] text-amber-300 text-[10px] font-bold font-mono flex items-center justify-center border border-amber-400/60">
                           {item.badge}
                         </span>
                       )}
@@ -281,8 +279,8 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
                     <div
                       className={`mt-1 text-center leading-[1.15] tracking-tight ${
                         isSelected
-                          ? 'font-bold text-[#E61575]'
-                          : 'font-semibold text-[#111827]'
+                          ? 'font-bold text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]'
+                          : 'font-semibold text-slate-200 group-hover:text-amber-200'
                       } text-[10px] sm:text-xs md:text-[13px]`}
                     >
                       <span className="block">{item.line1}</span>
@@ -299,8 +297,8 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
   }
 
   return (
-    <div className="bg-white border border-pink-100 rounded-2xl px-4 py-6 sm:px-8 sm:py-8 shadow-[0_12px_40px_rgba(230,21,117,0.06)] font-sans">
-      <h2 className="font-sans text-center text-xl sm:text-2xl md:text-[28px] font-medium tracking-tight text-[#111827] mb-6 sm:mb-8">
+    <div className="bg-[#0F1624] border border-amber-500/25 rounded-2xl px-4 py-6 sm:px-8 sm:py-8 shadow-[0_16px_48px_rgba(0,0,0,0.45)] font-sans">
+      <h2 className="font-serif-editorial text-center text-xl sm:text-2xl md:text-[28px] font-medium tracking-wide text-amber-100 mb-6 sm:mb-8">
         AI-Powered Live Event Photo Matching
       </h2>
 
@@ -312,11 +310,10 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
               key={item.id}
               className="relative flex flex-col items-center justify-start px-1 sm:px-4"
             >
-              {/* Exact Vertical Pink/Coral Line Divider between the 4 circles */}
               {index > 0 && (
                 <div
                   aria-hidden="true"
-                  className="absolute left-0 top-2 bottom-2 w-[1.5px] bg-[#D96B8A]/60"
+                  className="absolute left-0 top-2 bottom-2 w-[1.5px] bg-amber-400/35"
                 />
               )}
 
@@ -326,9 +323,9 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
                 className="group flex flex-col items-center text-center focus:outline-none"
               >
                 <div
-                  className={`relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-b from-[#FF851B] via-[#FF385C] to-[#E61575] flex items-center justify-center shadow-md transition-all duration-200 ${
+                  className={`relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-b from-[#F59E0B] via-[#D97706] to-[#92400E] flex items-center justify-center shadow-md transition-all duration-200 ${
                     isSelected
-                      ? 'ring-4 ring-[#E61575]/30 scale-105 shadow-xl'
+                      ? 'ring-4 ring-amber-400/60 scale-105 shadow-[0_0_28px_rgba(245,158,11,0.45)]'
                       : 'group-hover:scale-105 group-hover:shadow-lg'
                   }`}
                 >
@@ -338,8 +335,8 @@ export const FotoOwlFeatureBar: React.FC<FotoOwlFeatureBarProps> = ({
                 <div
                   className={`mt-3 sm:mt-4 text-xs sm:text-base md:text-[19px] leading-[1.22] tracking-tight transition-colors ${
                     isSelected
-                      ? 'font-bold text-[#E61575]'
-                      : 'font-medium text-[#111827] group-hover:text-[#E61575]'
+                      ? 'font-bold text-amber-300'
+                      : 'font-medium text-slate-200 group-hover:text-amber-200'
                   }`}
                 >
                   <span className="block">{item.line1}</span>

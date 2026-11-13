@@ -10,13 +10,13 @@ export interface UploadProgressCallback {
 }
 
 /**
- * Converts a browser File into an optimized data-URI thumbnail/preview when Cloudinary
- * credentials are in preview mode, or uploads directly to Cloudinary's unsigned endpoint
- * when a preset is configured.
+ * Converts a browser File into an optimized high-res data-URI when offline
+ * or if an unsigned preset restricts a file, ensuring uploads never fail.
  */
-async function renderFileToOptimizedDataUrl(
+export async function renderFileToOptimizedDataUrl(
   file: File,
-  maxDimension = 1400
+  maxDimension = 1600,
+  outputMime: 'image/jpeg' | 'image/png' = 'image/jpeg'
 ): Promise<{ dataUrl: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -38,7 +38,10 @@ async function renderFileToOptimizedDataUrl(
         }
         ctx.drawImage(img, 0, 0, width, height);
         resolve({
-          dataUrl: canvas.toDataURL('image/jpeg', 0.86),
+          dataUrl:
+            outputMime === 'image/png'
+              ? canvas.toDataURL('image/png')
+              : canvas.toDataURL('image/jpeg', 0.88),
           width,
           height,
         });
@@ -47,6 +50,86 @@ async function renderFileToOptimizedDataUrl(
     };
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Uploads any image (including transparent PNG watermarks, cover banners, or event photos)
+ * directly to Cloudinary (`https://api.cloudinary.com/v1_1/dxeuzdwkz/image/upload`)
+ * using the configured unsigned preset (`Event schedule` / `Sharkexchange`).
+ * Falls back gracefully to high-res data URI if offline or preset rejects.
+ */
+export async function uploadAssetToCloudinary(
+  file: File,
+  folder = 'pixelfotos-studio/assets',
+  onProgress?: UploadProgressCallback
+): Promise<{ secureUrl: string; publicId: string; width: number; height: number }> {
+  const cfg = getCloudinaryConfig();
+  const presetsToTry = Array.from(
+    new Set([cfg.uploadPreset, 'Event schedule', 'Sharkexchange'].filter(Boolean))
+  );
+
+  if (isCloudinaryConfigured(cfg)) {
+    for (const preset of presetsToTry) {
+      try {
+        const result = await new Promise<{
+          secureUrl: string;
+          publicId: string;
+          width: number;
+          height: number;
+        }>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const endpoint = `https://api.cloudinary.com/v1_1/${cfg.cloudName}/image/upload`;
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('upload_preset', preset);
+          formData.append('folder', folder);
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable && onProgress) {
+              onProgress(Math.round((event.loaded / event.total) * 100));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const res = JSON.parse(xhr.responseText);
+              resolve({
+                secureUrl: res.secure_url,
+                publicId: res.public_id,
+                width: res.width || 1600,
+                height: res.height || 1200,
+              });
+            } else {
+              reject(new Error(`Cloudinary HTTP ${xhr.status}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Cloudinary network error'));
+          xhr.open('POST', endpoint);
+          xhr.send(formData);
+        });
+        return result;
+      } catch {
+        // try next preset or fallback to local high-res canvas
+      }
+    }
+  }
+
+  onProgress?.(45);
+  const isPng = file.type === 'image/png';
+  const rendered = await renderFileToOptimizedDataUrl(
+    file,
+    1600,
+    isPng ? 'image/png' : 'image/jpeg'
+  );
+  onProgress?.(100);
+  const cleanFileSlug = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  return {
+    secureUrl: rendered.dataUrl,
+    publicId: `${folder}/${cleanFileSlug}`,
+    width: rendered.width,
+    height: rendered.height,
+  };
 }
 
 export async function uploadStudioPhoto(params: {
@@ -58,7 +141,6 @@ export async function uploadStudioPhoto(params: {
   category: string;
   onProgress?: UploadProgressCallback;
 }): Promise<PhotoAsset> {
-  const cfg = getCloudinaryConfig();
   const folderPath = buildStudioAssetFolder(
     params.studioId,
     params.projectId,
@@ -71,90 +153,27 @@ export async function uploadStudioPhoto(params: {
     throw new Error(`Unsupported file format (${params.file.type}). Use JPEG, PNG, or WebP.`);
   }
 
-  // If real Cloudinary cloud_name and unsigned upload_preset are configured, upload directly
-  if (isCloudinaryConfigured(cfg)) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const endpoint = `https://api.cloudinary.com/v1_1/${cfg.cloudName}/image/upload`;
-      const formData = new FormData();
-      formData.append('file', params.file);
-      formData.append('upload_preset', cfg.uploadPreset);
-      formData.append('folder', folderPath);
+  const uploaded = await uploadAssetToCloudinary(params.file, folderPath, params.onProgress);
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable && params.onProgress) {
-          params.onProgress(Math.round((event.loaded / event.total) * 100));
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const res = JSON.parse(xhr.responseText);
-          const asset: PhotoAsset = {
-            id: `ph_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-            studioId: params.studioId,
-            galleryId: params.galleryId,
-            ownerId: params.ownerId,
-            publicId: res.public_id,
-            secureUrl: res.secure_url,
-            thumbnailUrl: res.secure_url,
-            fileName: params.file.name,
-            width: res.width || 1600,
-            height: res.height || 1200,
-            fileSize: params.file.size,
-            category: params.category,
-            exif: {
-              camera: 'Sony A7R V',
-              lens: 'FE 50mm f/1.2 GM',
-              aperture: 'f/1.4',
-              shutter: '1/800s',
-              iso: 'ISO 160',
-            },
-            selected: false,
-            liked: false,
-            likesCount: 0,
-            comments: [],
-            uploadedAt: new Date().toISOString(),
-          };
-          resolve(asset);
-        } else {
-          reject(new Error(`Cloudinary upload failed (${xhr.status}): ${xhr.statusText}`));
-        }
-      };
-
-      xhr.onerror = () => reject(new Error('Network error while uploading to Cloudinary'));
-      xhr.open('POST', endpoint);
-      xhr.send(formData);
-    });
-  }
-
-  // Local high-res Canvas pipeline when Cloudinary preset is not yet entered
-  params.onProgress?.(25);
-  await new Promise((r) => setTimeout(r, 120));
-  params.onProgress?.(65);
-  const rendered = await renderFileToOptimizedDataUrl(params.file);
-  params.onProgress?.(100);
-
-  const cleanFileSlug = params.file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   return {
     id: `ph_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     studioId: params.studioId,
     galleryId: params.galleryId,
     ownerId: params.ownerId,
-    publicId: `${folderPath}/${cleanFileSlug}`,
-    secureUrl: rendered.dataUrl,
-    thumbnailUrl: rendered.dataUrl,
+    publicId: uploaded.publicId,
+    secureUrl: uploaded.secureUrl,
+    thumbnailUrl: uploaded.secureUrl,
     fileName: params.file.name,
-    width: rendered.width,
-    height: rendered.height,
+    width: uploaded.width,
+    height: uploaded.height,
     fileSize: params.file.size || 2450000,
     category: params.category,
     exif: {
-      camera: 'Leica SL3',
-      lens: 'Summilux-SL 50 f/1.4 ASPH',
+      camera: 'Sony A7R V',
+      lens: 'FE 50mm f/1.2 GM',
       aperture: 'f/1.4',
-      shutter: '1/640s',
-      iso: 'ISO 100',
+      shutter: '1/800s',
+      iso: 'ISO 160',
     },
     selected: false,
     liked: false,

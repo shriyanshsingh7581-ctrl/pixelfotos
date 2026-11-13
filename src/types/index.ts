@@ -223,14 +223,26 @@ export interface TeamMember {
   assignedProjectsCount: number;
 }
 
+export interface AlbumCommentPin {
+  id: string;
+  x: number;
+  y: number;
+  author: string;
+  note: string;
+}
+
 export interface AlbumSpread {
   id: string;
   pageNumber: number;
   title: string;
-  layout: 'cover' | 'single_bleed' | 'dual_portrait' | 'editorial_trio';
+  layout: 'cover' | 'single_bleed' | 'dual_portrait' | 'editorial_trio' | 'panoramic_grid';
   backgroundHex: string;
   caption: string;
   photoIds: string[];
+  zoom?: number;
+  panX?: number;
+  panY?: number;
+  pins?: AlbumCommentPin[];
 }
 
 export interface WeddingAlbumDraft {
@@ -244,6 +256,64 @@ export interface WeddingAlbumDraft {
   clientFeedback: string;
   spreads: AlbumSpread[];
   updatedAt: string;
+}
+
+export type WatermarkGridPosition =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'center-left'
+  | 'center'
+  | 'center-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right';
+
+export interface WatermarkSettings {
+  enabled: boolean;
+  mode: 'text' | 'logo';
+  text: string;
+  fontFamily: string;
+  fontSize: number;
+  rotation: number;
+  opacity: number;
+  logoUrl: string;
+  position9Grid: WatermarkGridPosition;
+  scale: number;
+}
+
+export interface WeddingInvitationEventItem {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  dressCode: string;
+}
+
+export interface WeddingInvitationRSVP {
+  id: string;
+  guestName: string;
+  phone: string;
+  guestsCount: number;
+  attendingEvents: string[];
+  message: string;
+  submittedAt: string;
+}
+
+export interface WeddingInvitationSite {
+  subdomain: string;
+  coupleNames: string;
+  tagline: string;
+  weddingDate: string;
+  story: string;
+  heroBannerUrl: string;
+  venueName: string;
+  venueAddress: string;
+  venueMapUrl: string;
+  galleryId: string;
+  events: WeddingInvitationEventItem[];
+  rsvps: WeddingInvitationRSVP[];
 }
 
 export interface CloudinaryConfig {
