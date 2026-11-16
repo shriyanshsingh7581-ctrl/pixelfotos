@@ -2,13 +2,15 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-  body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #0F172A;
-    background-color: #F8FAFC;
+  html {
+    scroll-behavior: smooth;
   }
 
-  h1, h2, .font-serif-editorial {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1, h2, .font-editorial {
     font-family: 'Cormorant Garamond', Georgia, serif;
   }
 
@@ -18,75 +20,21 @@
   }
 }
 
-@keyframes orbitSlow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Custom thin luxury scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-@keyframes orbitReverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-@keyframes pulseHalo {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.28;
-  }
-  50% {
-    transform: scale(1.16);
-    opacity: 0.48;
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 9999px;
 }
 
-@keyframes shimmerFilament {
-  0%, 100% {
-    transform: scaleX(0.45);
-    opacity: 0.35;
-  }
-  50% {
-    transform: scaleX(1);
-    opacity: 0.95;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.45);
 }
-
-@keyframes floatLetter {
-  0%, 100% {
-    transform: translateY(0px);
-    opacity: 0.86;
-  }
-  50% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
-}
-
-.animate-orbit-slow {
-  animation: orbitSlow 44s linear infinite;
-}
-
-.animate-orbit-reverse {
-  animation: orbitReverse 32s linear infinite;
-}
-
-.animate-pulse-halo {
-  animation: pulseHalo 6.5s ease-in-out infinite;
-}
-
-.animate-shimmer-filament {
-  animation: shimmerFilament 4.2s ease-in-out infinite;
-}
-
-.animate-float-letter {
-  animation: floatLetter 3.4s ease-in-out infinite;
-}
-
-

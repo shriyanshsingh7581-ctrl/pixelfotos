@@ -78,7 +78,7 @@
     },
     "PhotoAsset": {
       "title": "PhotoAsset",
-      "description": "Cloudinary photo metadata inside a gallery.",
+      "description": "Photo asset metadata inside a gallery.",
       "type": "object",
       "properties": {
         "studioId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
@@ -93,6 +93,121 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["studioId", "galleryId", "ownerId", "publicId", "secureUrl", "fileName", "category", "selected", "liked", "createdAt"]
+    },
+    "PixelEvent": {
+      "title": "PixelEvent",
+      "description": "Published or studio-managed event micro-website configuration.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "slug": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9\\-]+$" },
+        "coupleOrHostName": { "type": "string", "maxLength": 140 },
+        "eventType": { "type": "string", "enum": ["Wedding", "Engagement", "Birthday", "Griha Pravesh"] },
+        "eventDate": { "type": "string", "maxLength": 40 },
+        "venueName": { "type": "string", "maxLength": 180 },
+        "venueCity": { "type": "string", "maxLength": 120 },
+        "googleMapsQuery": { "type": "string", "maxLength": 240 },
+        "storyText": { "type": "string", "maxLength": 1200 },
+        "youtubeStreamUrl": { "type": "string", "maxLength": 400 },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "slug", "coupleOrHostName", "eventType", "eventDate", "venueName", "venueCity", "googleMapsQuery", "storyText", "youtubeStreamUrl", "isPublished", "createdAt", "updatedAt"]
+    },
+    "CRMLead": {
+      "title": "CRMLead",
+      "description": "Studio client CRM record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 140 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "email": { "type": "string", "maxLength": 160 },
+        "eventDate": { "type": "string", "maxLength": 40 },
+        "packageName": { "type": "string", "maxLength": 160 },
+        "packageValueInr": { "type": "number" },
+        "leadStatus": { "type": "string", "enum": ["Inquiry", "Booked", "Editing", "Delivered"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "phone", "email", "eventDate", "packageName", "packageValueInr", "leadStatus", "createdAt"]
+    },
+    "TeamTask": {
+      "title": "TeamTask",
+      "description": "Crew assignment and progress status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "memberName": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["Lead Photographer", "Candid Shooter", "Cinematographer", "Album Editor"] },
+        "assignedEvent": { "type": "string", "maxLength": 140 },
+        "taskTitle": { "type": "string", "maxLength": 200 },
+        "progressPercent": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "memberName", "role", "assignedEvent", "taskTitle", "progressPercent", "createdAt"]
+    },
+    "StudioExpenseDoc": {
+      "title": "StudioExpenseDoc",
+      "description": "Per-event studio expense voucher.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "eventName": { "type": "string", "maxLength": 140 },
+        "category": { "type": "string", "enum": ["Travel", "Food", "Freelancer Payouts", "Equipment Rental", "Studio Overhead"] },
+        "description": { "type": "string", "maxLength": 240 },
+        "amountInr": { "type": "number" },
+        "date": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "eventId", "eventName", "category", "description", "amountInr", "date", "createdAt"]
+    },
+    "PrintOrderDoc": {
+      "title": "PrintOrderDoc",
+      "description": "Framed print or heirloom album order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "photoId": { "type": "string", "maxLength": 128 },
+        "photoFileName": { "type": "string", "maxLength": 180 },
+        "productId": { "type": "string", "maxLength": 100 },
+        "productName": { "type": "string", "maxLength": 140 },
+        "category": { "type": "string", "maxLength": 80 },
+        "dimensions": { "type": "string", "maxLength": 80 },
+        "quantity": { "type": "number" },
+        "clientTotalInr": { "type": "number" },
+        "studioProfitInr": { "type": "number" },
+        "customerName": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["New Order", "In Print Lab", "Shipped"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "photoId", "photoFileName", "productId", "productName", "category", "dimensions", "quantity", "clientTotalInr", "studioProfitInr", "customerName", "status", "createdAt"]
+    },
+    "InvoiceDoc": {
+      "title": "InvoiceDoc",
+      "description": "Quotation or GST Invoice with UPI settlement status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "docNumber": { "type": "string", "maxLength": 60 },
+        "clientId": { "type": "string", "maxLength": 128 },
+        "clientName": { "type": "string", "maxLength": 140 },
+        "eventTitle": { "type": "string", "maxLength": 200 },
+        "stage": { "type": "string", "enum": ["Quotation", "Invoice"] },
+        "status": { "type": "string", "enum": ["Draft", "Sent", "Approved", "Paid"] },
+        "includeGst18": { "type": "boolean" },
+        "advancePaidInr": { "type": "number" },
+        "upiId": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "docNumber", "clientId", "clientName", "eventTitle", "stage", "status", "includeGst18", "advancePaidInr", "upiId", "createdAt"]
     }
   },
   "firestore": {
@@ -119,6 +234,30 @@
     "/galleries/{galleryId}/photos/{photoId}": {
       "schema": { "$ref": "#/entities/PhotoAsset" },
       "description": "Photos inside a specific gallery"
+    },
+    "/studio_events/{eventId}": {
+      "schema": { "$ref": "#/entities/PixelEvent" },
+      "description": "PixelFotos event microsites & schedule configurations"
+    },
+    "/crm_leads/{leadId}": {
+      "schema": { "$ref": "#/entities/CRMLead" },
+      "description": "Studio client CRM pipeline records"
+    },
+    "/team_tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/TeamTask" },
+      "description": "Studio crew task assignments"
+    },
+    "/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/StudioExpenseDoc" },
+      "description": "Per-event studio expenses"
+    },
+    "/print_orders/{orderId}": {
+      "schema": { "$ref": "#/entities/PrintOrderDoc" },
+      "description": "Client print store frame & album orders"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/InvoiceDoc" },
+      "description": "Quotations, GST invoices, and UPI settlement records"
     }
   }
 }

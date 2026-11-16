@@ -1,579 +1,609 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { ImageOptimizer } from '../components/ImageOptimizer';
-import { ClientGalleryPortal } from '../components/gallery/ClientGalleryPortal';
-import { StudioPortfolioPage } from '../components/portfolio/StudioPortfolioPage';
-import { WeddingInvitationBuilder } from '../components/wedding-website/WeddingInvitationBuilder';
-import { PassportExamPhotoStudio } from '../components/passport-studio/PassportExamPhotoStudio';
-import { DashboardTabId } from '../components/dashboard/StudioDashboardShell';
-import { FotoOwlActionMode, FotoOwlFeatureBar } from '../components/FotoOwlFeatureBar';
+import {
+  Aperture,
+  ArrowRight,
+  Check,
+  ExternalLink,
+  Frame,
+  Globe,
+  Layers,
+  Moon,
+  Palette,
+  QrCode,
+  Receipt,
+  ScanFace,
+  Sparkles,
+  Sun,
+  Users,
+  Wand2,
+} from 'lucide-react';
+import { usePixelFotos } from '../contexts/PixelFotosContext';
+import { PIXELFOTOS_ASSETS } from '../data/pixelfotosData';
+import { LifecycleStageNumber, StudioModuleId } from '../types/pixelfotos';
 
-interface LandingPageProps {
-  onOpenDashboard: (tab?: DashboardTabId) => void;
-  onOpenOnboarding: () => void;
-}
+type DemoModeId = 'culling' | 'live_sync' | 'face_match' | 'print_upi';
 
-export const LandingPage: React.FC<LandingPageProps> = ({
-  onOpenDashboard,
-  onOpenOnboarding,
-}) => {
-  const { studio, photos, plans } = useAuth();
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
-  const [activeShowcaseMode, setActiveShowcaseMode] = useState<
-    'proofing' | 'passport_studio' | 'portfolio' | 'invitation'
-  >('passport_studio');
-  const [activeFotoOwlMode, setActiveFotoOwlMode] =
-    useState<FotoOwlActionMode | null>('face_match');
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [heroPreviewIndex, setHeroPreviewIndex] = useState<number>(0);
+const DEMO_TABS: {
+  id: DemoModeId;
+  label: string;
+  headline: string;
+  description: string;
+  statLabel: string;
+  statValue: string;
+  imageUrl: string;
+  targetModule: StudioModuleId;
+  targetStage?: LifecycleStageNumber;
+  highlights: string[];
+}[] = [
+  {
+    id: 'culling',
+    label: 'AI Culling & LUT Grade',
+    headline: 'Human-Like Culling & Custom .CUBE Color Grading',
+    description:
+      'Automatically filters closed-eye blinks, motion blur, and burst duplicates while grouping poses and applying custom .CUBE LUTs and studio watermarks in one batch.',
+    statLabel: 'Batch Culling Accuracy',
+    statValue: '98.4%',
+    imageUrl: PIXELFOTOS_ASSETS.weddingBridal,
+    targetModule: 'culling',
+    highlights: [
+      'Auto-flags Closed Eyes, Motion Blur & Burst Duplicates',
+      'Loads .cube & .3dl LUT files with live Before/After split view',
+      '1-Click Natural Album Skin, Flyaway Hair & Glare Retouch',
+    ],
+  },
+  {
+    id: 'live_sync',
+    label: 'Venue QR & C-to-C Sync',
+    headline: 'Camera-to-Cloud in 48 Seconds via USB-C',
+    description:
+      'Guests scan your luxury venue QR standee once with a selfie. As photographers shoot, frames stream straight from camera to phone over USB-C and alert guests on WhatsApp.',
+    statLabel: 'C-to-C Sync Latency',
+    statValue: '48 sec',
+    imageUrl: PIXELFOTOS_ASSETS.weddingHaldi,
+    targetModule: 'lifecycle',
+    targetStage: 3,
+    highlights: [
+      'Printable Venue QR Standee Card ("Scan to get your photos")',
+      'USB-C Camera-to-Phone Sync without carrying a heavy laptop',
+      'Instant WhatsApp notification triggered on first photo upload',
+    ],
+  },
+  {
+    id: 'face_match',
+    label: 'AI Face Match ("Only You")',
+    headline: '128+ Personalized Guest Streams & RAW Matching',
+    description:
+      'Guests browse "Only You" instead of scrolling 6,000+ images, heart their favorites, and let your studio locate exact camera RAW filenames (.CR3/.ARW) in one click.',
+    statLabel: 'RAW Archive Indexed',
+    statValue: '6,240+',
+    imageUrl: PIXELFOTOS_ASSETS.weddingSangeet,
+    targetModule: 'lifecycle',
+    targetStage: 4,
+    highlights: [
+      '"Only You" personalized feed + "Unknown Faces" owner filter',
+      'Guest hearts sync back to Studio RAW Original Matcher',
+      '60-Day Automated Memory Lane & 5-Star Google Review prompt',
+    ],
+  },
+  {
+    id: 'print_upi',
+    label: 'Print Store & UPI Billing',
+    headline: 'Sell Framed Prints & Collect Instant 0% Fee UPI',
+    description:
+      'Convert galleries into profit centers with an in-built Wooden/Acrylic Frame & Linen Album store plus itemized GST quotations with scannable UPI QR payment links.',
+    statLabel: 'Print Store Margin',
+    statValue: '+62%',
+    imageUrl: PIXELFOTOS_ASSETS.studioPrintFrame,
+    targetModule: 'print_store',
+    highlights: [
+      'Wooden, Acrylic, Canvas & Luxury Album storefront in every gallery',
+      '1-Click Quotation → GST Invoice with scannable UPI QR code',
+      'Expenses & Print Profits sync live to Net Profit per Event',
+    ],
+  },
+];
 
-  const heroPhoto = photos[heroPreviewIndex] || photos[0];
+const CORE_MODULES: {
+  id: StudioModuleId;
+  num: string;
+  title: string;
+  summary: string;
+  icon: React.FC<{ className?: string }>;
+}[] = [
+  {
+    id: 'culling',
+    num: '01',
+    title: 'AI Photo Culling',
+    summary: 'Detects closed eyes, blur, duplicates & groups poses with 1–5 star ratings and CSV export.',
+    icon: Sparkles,
+  },
+  {
+    id: 'retouch_lut',
+    num: '02',
+    title: 'AI Retouch & .CUBE LUTs',
+    summary: 'Upload custom .cube/.3dl LUTs, batch exposure match, and apply logo/text watermarks.',
+    icon: Palette,
+  },
+  {
+    id: 'album_retouch',
+    num: '03',
+    title: '1-Click Album AI Retouch',
+    summary: 'Natural skin blemish, flyaway hair, flash glare & background softening across full albums.',
+    icon: Wand2,
+  },
+  {
+    id: 'microsite_builder',
+    num: '04',
+    title: 'Event Microsite Generator',
+    summary: 'Custom pixelfotos.online/slug sites with Couple Story, Google Maps, Schedule & YouTube Live.',
+    icon: Globe,
+  },
+  {
+    id: 'print_store',
+    num: '05',
+    title: 'Client Gallery & Print Store',
+    summary: 'Studio branding, 4-digit PIN gates, download controls, and framed print/album profit margins.',
+    icon: Frame,
+  },
+  {
+    id: 'crm_expenses',
+    num: '06',
+    title: 'Studio CRM, Team & P&L',
+    summary: 'Client pipeline logs, crew task progress sliders, and real-time Net Profit per Event.',
+    icon: Users,
+  },
+  {
+    id: 'billing_upi',
+    num: '07',
+    title: 'Billing, Quotes & UPI QR',
+    summary: 'Itemized GST quotation-to-invoice converter with scannable UPI QR & instant ledger sync.',
+    icon: Receipt,
+  },
+];
 
-  const handleSelectFotoOwlFeature = (mode: FotoOwlActionMode) => {
-    setActiveFotoOwlMode(mode);
-    setActiveShowcaseMode('proofing');
-    const el = document.getElementById('live-proofing');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+const LIFECYCLE_STEPS: {
+  stage: LifecycleStageNumber;
+  title: string;
+  caption: string;
+}[] = [
+  {
+    stage: 1,
+    title: 'Create the Event',
+    caption: 'Auto-slug microsite + 1-click WhatsApp invite',
+  },
+  {
+    stage: 2,
+    title: 'At the Event QR',
+    caption: 'Printable standee + guest selfie check-in',
+  },
+  {
+    stage: 3,
+    title: 'Live C-to-C Sync',
+    caption: 'USB-C camera-to-phone stream in 48 sec',
+  },
+  {
+    stage: 4,
+    title: 'AI Face Match',
+    caption: '"Only You" guest gallery + live ❤️ hearts',
+  },
+  {
+    stage: 5,
+    title: 'Locate Originals',
+    caption: 'Match guest likes to 6,240+ RAW files',
+  },
+  {
+    stage: 6,
+    title: '2 Months Later',
+    caption: 'Memory Lane reel + 5★ Google Review alert',
+  },
+];
 
-  const faqs = [
-    {
-      q: 'How does Instant AI Face Match & WhatsApp Guest Delivery work at weddings?',
-      a: 'Guests scan the venue Display QR poster or personal QR pass, take a 1-second selfie, and our AI matches their face across all event photos with 99.4% accuracy—with 1-click delivery to WhatsApp or direct Cloudinary high-resolution download.',
-    },
-    {
-      q: 'How does Cloudinary storage (dxeuzdwkz) and direct fl_attachment download work?',
-      a: 'All uploaded wedding photos, album spreads, PNG watermarks, and portfolio masters are stored on Cloudinary using unsigned preset uploads and delivered with one-click fl_attachment high-res downloads.',
-    },
-    {
-      q: 'Can clients select ❤️ favorites and export exact file numbers for the photographer?',
-      a: 'Yes! Clients tap the ❤️ button on any photo, filter by "Selected Only", and export the exact file numbers & filenames list via 1-click Copy, CSV download, or direct WhatsApp message to the photographer.',
-    },
-    {
-      q: 'How do the Interactive Album Designer, Colour Grading Studio, and Wedding Invitation Subdomain Builder work?',
-      a: 'Studios can design multi-spread Italian Linen albums with comment pins and PDF export, grade photos with 6 luxury wedding LUT presets, sync Sony/Canon/Nikon cameras over Wi-Fi, and publish couple-name.pixelfotos.online digital wedding invitation websites.',
-    },
-  ];
+export const LandingPage: React.FC = () => {
+  const { theme, toggleTheme, openStudioAt, openMicrositeBySlug, microsite } = usePixelFotos();
+  const [activeDemo, setActiveDemo] = useState<DemoModeId>('culling');
+
+  const currentDemo = DEMO_TABS.find((d) => d.id === activeDemo) || DEMO_TABS[0];
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-slate-100 pb-28">
-      {/* Luxury Dark/Gold Editorial Top Header */}
-      <header className="sticky top-0 z-40 bg-[#0B0F17]/95 backdrop-blur-xl border-b border-amber-500/25">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 py-3.5">
-          <a
-            href="#top"
-            className="flex items-center gap-2.5 whitespace-nowrap shrink-0"
-          >
-            <span className="text-lg sm:text-xl font-serif-editorial font-bold tracking-wide text-amber-300">
-              Lumina Studio OS
-            </span>
-            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-[10px] font-mono text-amber-200">
-              pixelfotos.online
+    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#090B10] text-zinc-900 dark:text-white transition-colors">
+      {/* Strict 3-Zone Top Navigation Bar */}
+      <header className="sticky top-0 z-40 h-16 border-b border-zinc-200 dark:border-white/10 bg-[#FAF9F6]/90 dark:bg-[#090B10]/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          {/* Zone 1: Brand Identity */}
+          <a href="#top" className="flex items-center gap-2.5 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#D4AF37] text-[#090B10] flex items-center justify-center">
+              <Aperture className="w-5 h-5" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight whitespace-nowrap">
+              PixelFotos
             </span>
           </a>
 
-          <nav
-            aria-label="Primary Navigation"
-            className="hidden md:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-slate-300"
-          >
-            <button
-              type="button"
-              onClick={() => onOpenDashboard('passport_studio')}
-              className="text-amber-300 hover:text-amber-200 transition-colors whitespace-nowrap shrink-0"
-            >
-              ID, Passport &amp; Exam Print Lab
-            </button>
+          {/* Zone 2: 4 Clean Navigation Links */}
+          <nav className="hidden md:flex items-center gap-7">
             <a
-              href="#live-proofing"
-              className="hover:text-amber-300 transition-colors whitespace-nowrap shrink-0"
+              href="#live-demo"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0"
             >
-              AI Face Match &amp; QR
+              Live Demo
+            </a>
+            <a
+              href="#core-modules"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0"
+            >
+              Core Modules
+            </a>
+            <a
+              href="#event-lifecycle"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0"
+            >
+              Event Lifecycle
             </a>
             <button
               type="button"
-              onClick={() => onOpenDashboard('album')}
-              className="hover:text-amber-300 transition-colors whitespace-nowrap shrink-0"
+              onClick={() => openMicrositeBySlug(microsite.slug)}
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0 cursor-pointer"
             >
-              Album Designer
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenDashboard('editor')}
-              className="hover:text-amber-300 transition-colors whitespace-nowrap shrink-0"
-            >
-              Colour Grading &amp; Watermark
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenDashboard('tether')}
-              className="hover:text-amber-300 transition-colors whitespace-nowrap shrink-0"
-            >
-              Live Camera Sync
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenDashboard('invitation')}
-              className="hover:text-amber-300 transition-colors whitespace-nowrap shrink-0"
-            >
-              Wedding Microsite
+              Client Microsite
             </button>
           </nav>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => onOpenDashboard('overview')}
-              className="px-4 py-2 text-xs font-bold text-[#0B0F17] bg-gradient-to-r from-[#F59E0B] via-[#D97706] to-[#B45309] rounded-full hover:opacity-95 transition-opacity whitespace-nowrap shrink-0 shadow-[0_0_20px_rgba(245,158,11,0.3)]"
-            >
-              Open Studio Dashboard
-            </button>
-          </div>
+          {/* Zone 3: Primary Studio CTA */}
+          <button
+            type="button"
+            onClick={() => openStudioAt('lifecycle', 1)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            Launch Studio
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
-      {/* Luxury Hero Section */}
-      <section
-        id="top"
-        className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-12 md:pt-12 md:pb-16"
-      >
+      {/* Editorial Split Hero */}
+      <section id="top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 lg:pt-16 lg:pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
-          <div className="lg:col-span-6 flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
-                LUXURY PHOTOGRAPHY SAAS · CLOUDINARY DELIVERY · AI QR GUEST SHARING
+          {/* Left Narrative Column */}
+          <div className="lg:col-span-6 flex flex-col justify-between space-y-8">
+            <div className="space-y-5">
+              <p className="text-xs font-mono uppercase tracking-[0.26em] text-[#B58E24] dark:text-[#D4AF37]">
+                pixelfotos.online · All-in-One Studio & Event OS
               </p>
-              <h1
-                className="text-3xl sm:text-5xl lg:text-[3.4rem] font-serif-editorial font-semibold tracking-tight text-white leading-[1.06]"
-                style={{ textWrap: 'balance' }}
-              >
-                Bespoke Wedding Proofing, AI Face Match &amp; Studio OS.
+
+              <h1 className="text-5xl sm:text-6xl lg:text-[64px] font-editorial font-semibold leading-[1.03] tracking-tight text-zinc-900 dark:text-white">
+                AI Photography, Live Guest Galleries & Studio Command.
               </h1>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-                Deliver high-resolution Cloudinary galleries with 1-click{' '}
-                <code className="text-amber-300">fl_attachment</code> downloads, ❤️ client favorite file-number exports, Italian Linen wedding album proofing, 6 wedding colour-grading LUTs, Sony/Canon/Nikon Wi-Fi tethering, and{' '}
-                <code className="text-amber-300">couple.pixelfotos.online</code> invitation microsites.
+
+              <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-300 max-w-xl leading-relaxed">
+                Cull thousands of shoots with human-like AI precision, stream USB-C camera shots to guest WhatsApp in 48 seconds, sell framed prints, and manage GST billing with instant UPI QR.
               </p>
-            </div>
 
-            <div className="space-y-4 pt-1">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => onOpenDashboard('passport_studio')}
-                  className="px-5 py-3 bg-gradient-to-r from-[#F59E0B] via-[#D97706] to-[#B45309] text-[#0B0F17] text-xs font-bold rounded-full hover:opacity-95 transition-opacity whitespace-nowrap shrink-0 shadow-[0_0_24px_rgba(245,158,11,0.35)]"
+                  onClick={() => openStudioAt('culling')}
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer whitespace-nowrap"
                 >
-                  Open ID, Passport &amp; Exam Studio
+                  Launch Studio Command
+                  <ArrowRight className="w-4 h-4" />
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleSelectFotoOwlFeature('face_match')}
-                  className="px-5 py-3 bg-[#131B2E] border border-amber-500/40 text-amber-200 text-xs font-semibold rounded-full hover:bg-amber-500/15 transition-colors whitespace-nowrap shrink-0"
+                  onClick={() => openMicrositeBySlug(microsite.slug)}
+                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold border border-zinc-300 dark:border-white/15 bg-white dark:bg-[#11141D] text-zinc-900 dark:text-white hover:border-[#D4AF37] transition cursor-pointer whitespace-nowrap"
                 >
-                  Try Instant Face Match Live
+                  <ExternalLink className="w-4 h-4 text-[#D4AF37]" />
+                  Preview /{microsite.slug}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => onOpenDashboard('album')}
-                  className="px-5 py-3 bg-[#131B2E] border border-amber-500/40 text-amber-200 text-xs font-semibold rounded-full hover:bg-amber-500/15 transition-colors whitespace-nowrap shrink-0"
+                  onClick={toggleTheme}
+                  aria-label="Toggle Light and Dark Theme"
+                  className="inline-flex items-center gap-2 px-3.5 py-3.5 rounded-xl text-xs font-mono border border-zinc-300 dark:border-white/15 bg-white dark:bg-[#11141D] text-zinc-700 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
                 >
-                  Launch Album Designer
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onOpenOnboarding}
-                  className="px-4 py-3 bg-white/10 border border-white/20 text-white text-xs font-semibold rounded-full hover:bg-white/15 transition-colors whitespace-nowrap shrink-0"
-                >
-                  Studio Auth &amp; Setup
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="w-4 h-4 text-[#D4AF37]" />
+                      Light
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-4 h-4 text-[#B58E24]" />
+                      Dark
+                    </>
+                  )}
                 </button>
               </div>
+            </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-1">
-                <span className="font-medium text-amber-200/90">Cloudinary Cloud: dxeuzdwkz</span>
-                <span aria-hidden="true">·</span>
-                <span className="font-medium text-amber-200/90">Mobile / iPad / Desktop Adaptive</span>
-                <span aria-hidden="true">·</span>
-                <span className="font-medium text-amber-200/90">WhatsApp Instant Guest Delivery</span>
+            {/* 3-Column Metrics Bar */}
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-zinc-200 dark:border-white/10">
+              <div>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
+                  48 sec
+                </p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  C-to-C Camera Sync
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#B58E24] dark:text-[#D4AF37] tabular-nums">
+                  6,240+
+                </p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  RAW Original Matcher
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#10B981] tabular-nums">
+                  7 Modules
+                </p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  Zero-Commission UPI
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-6 flex flex-col">
-            <div className="bg-[#0F1624] border border-amber-500/30 rounded-2xl p-4 flex-1 flex flex-col justify-between shadow-2xl">
-              <div className="relative rounded-xl overflow-hidden aspect-[16/10] bg-[#0B0F17]">
-                {heroPhoto && (
-                  <ImageOptimizer
-                    src={heroPhoto.secureUrl}
-                    alt={heroPhoto.fileName}
-                    watermarkText={studio.watermarkText}
-                    className="w-full h-full"
-                  />
-                )}
-                <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-[#0B0F17]/80 border border-amber-500/30 text-amber-200 text-xs font-medium backdrop-blur-xs">
-                  {studio.studioName} — White-Label Proofing Vault
+          {/* Right Editorial Hero Image Card */}
+          <div className="lg:col-span-6">
+            <div className="relative h-full min-h-[400px] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10 shadow-2xl">
+              <img
+                src={PIXELFOTOS_ASSETS.heroRoyalWedding}
+                alt="Ananya & Kabir Royal Udaipur Wedding Editorial Portrait"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#090B10] via-[#090B10]/20 to-transparent" />
+              <div className="absolute bottom-5 inset-x-5 rounded-xl border border-white/15 bg-[#090B10]/75 backdrop-blur-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
+                <div>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#D4AF37]">
+                    Live Showcase · Udaipur
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {microsite.coupleOrHostName} · pixelfotos.online/{microsite.slug}
+                  </p>
                 </div>
-                <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17] text-[11px] font-bold shadow-md">
-                  99.4% AI Face Match Ready
-                </div>
-              </div>
-
-              <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="text-xs">
-                  <div className="font-semibold text-white">{heroPhoto?.fileName}</div>
-                  <div className="text-slate-400 font-mono tabular-nums mt-0.5">
-                    {heroPhoto?.exif.camera} · {heroPhoto?.exif.lens} · Cloudinary Master Ready
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  {photos.slice(0, 4).map((ph, idx) => (
-                    <button
-                      key={ph.id}
-                      type="button"
-                      onClick={() => setHeroPreviewIndex(idx)}
-                      aria-label={`Preview photo ${idx + 1}`}
-                      className={`w-12 h-9 rounded-lg overflow-hidden border-2 transition-all ${
-                        heroPreviewIndex === idx
-                          ? 'border-amber-400 scale-105'
-                          : 'border-transparent opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      <ImageOptimizer
-                        src={ph.thumbnailUrl}
-                        alt={ph.fileName}
-                        className="w-full h-full"
-                      />
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => openStudioAt('lifecycle', 2)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] whitespace-nowrap cursor-pointer"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  Inspect Event QR
+                </button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Interactive Live Proofing, White-Label Portfolio & Wedding Invitation Microsite Switcher */}
-      <section id="live-proofing" className="bg-[#0B0F17] border-y border-amber-500/20 py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      {/* Interactive Live Demo Switcher */}
+      <section
+        id="live-demo"
+        className="border-y border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0D1017] py-16"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">
-                LIVE INTERACTIVE STUDIO WORKSPACE
+              <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
+                Interactive Platform Preview
               </p>
-              <h2 className="text-2xl sm:text-3xl font-serif-editorial font-semibold text-white">
-                Client Selection (❤️), AI QR Guest Delivery, Portfolio &amp; Wedding Microsite
+              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
+                Explore Every Studio Capability Live
               </h2>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1 p-1 bg-[#131B2E] border border-amber-500/30 rounded-xl self-start">
-              <button
-                type="button"
-                onClick={() => setActiveShowcaseMode('passport_studio')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                  activeShowcaseMode === 'passport_studio'
-                    ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                ID, Passport &amp; Exam Print Studio
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveShowcaseMode('proofing')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                  activeShowcaseMode === 'proofing'
-                    ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                White-Label Client Gallery
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveShowcaseMode('portfolio')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                  activeShowcaseMode === 'portfolio'
-                    ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Studio Portfolio (/studio/{studio.slug})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveShowcaseMode('invitation')}
-                className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                  activeShowcaseMode === 'invitation'
-                    ? 'bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-[#0B0F17]'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Wedding Invitation (*.pixelfotos.online)
-              </button>
-            </div>
-          </div>
-
-          {activeShowcaseMode === 'passport_studio' ? (
-            <PassportExamPhotoStudio />
-          ) : activeShowcaseMode === 'proofing' ? (
-            <ClientGalleryPortal
-              externalFotoOwlMode={activeFotoOwlMode}
-              onChangeFotoOwlMode={setActiveFotoOwlMode}
-            />
-          ) : activeShowcaseMode === 'portfolio' ? (
-            <StudioPortfolioPage onOpenGallery={() => setActiveShowcaseMode('proofing')} />
-          ) : (
-            <WeddingInvitationBuilder onOpenGallery={() => setActiveShowcaseMode('proofing')} />
-          )}
-        </div>
-      </section>
-
-      {/* Complete 10 Studio Modules Showcase (Modules A to J) */}
-      <section id="workflows" className="max-w-7xl mx-auto px-4 sm:px-6 py-14 space-y-10">
-        <div className="max-w-2xl space-y-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-amber-400">
-            MODULES A TO J · LUXURY STUDIO OPERATING SYSTEM
-          </p>
-          <h2 className="text-2xl sm:text-3xl font-serif-editorial font-semibold text-white">
-            Every tool required by high-end wedding &amp; editorial studios.
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            {
-              title: 'A. Interactive Wedding Album Designer',
-              desc: 'Multi-spread visual builder with 5 templates (Italian Linen Cover, Single Bleed, Dual Portrait, Editorial Trio, Panoramic Grid), zoom/pan, comment pins & PDF export.',
-              actionLabel: 'Open Album Designer →',
-              onClick: () => onOpenDashboard('album'),
-            },
-            {
-              title: 'B & F. Colour Grading & Watermark Studio',
-              desc: '6 signature wedding LUT presets (Royal Warmth, Golden Hour Airy, Bridal Monochrome, Dark Moody Cinema) + Text & PNG Logo Watermark via Cloudinary.',
-              actionLabel: 'Open Grading & Watermark →',
-              onClick: () => onOpenDashboard('editor'),
-            },
-            {
-              title: 'C & D. ❤️ Selection & AI QR Guest Delivery',
-              desc: 'Clients favorite photos with ❤️, copy exact file numbers, and allow wedding guests to scan a venue QR, take a selfie, and receive photos on WhatsApp.',
-              actionLabel: 'Open Client Proofing →',
-              onClick: () => handleSelectFotoOwlFeature('face_match'),
-            },
-            {
-              title: 'E & G. Brand Galleries & Live Camera Sync',
-              desc: 'White-label galleries with Masonry/Grid switcher + Sony, Canon & Nikon Wi-Fi tethering auto-upload to Cloudinary (dxeuzdwkz / Event schedule).',
-              actionLabel: 'Open Live Camera Sync →',
-              onClick: () => onOpenDashboard('tether'),
-            },
-            {
-              title: 'H & I. Studio CRM, Billing & Portfolio',
-              desc: 'Track wedding bookings, shoot calendar, advance paid vs pending balances, generate GST PDF invoices, send WhatsApp payment reminders, and showcase works.',
-              actionLabel: 'Open CRM & Billing →',
-              onClick: () => onOpenDashboard('invoices'),
-            },
-            {
-              title: 'J. Wedding Invitation Website & Custom DNS',
-              desc: 'Publish shareable couple-name.pixelfotos.online digital wedding invitations with Event Schedule, Google Maps, Countdown, RSVP & Custom Domain CNAME setup.',
-              actionLabel: 'Open Wedding Website Builder →',
-              onClick: () => onOpenDashboard('invitation'),
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="bg-[#0F1624] border border-amber-500/20 hover:border-amber-400 rounded-2xl p-6 flex flex-col justify-between space-y-5 transition-all shadow-xl"
-            >
-              <div className="space-y-2.5">
-                <h3 className="text-lg font-serif-editorial font-semibold text-white">
-                  {item.title}
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={item.onClick}
-                className="text-xs font-bold text-amber-400 hover:underline transition-colors self-start"
-              >
-                {item.actionLabel}
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Transparent Subscription Pricing Matrix */}
-      <section id="pricing" className="bg-[#0B0F17] border-y border-amber-500/20 py-14">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">
-                TRANSPARENT STUDIO PLANS
-              </p>
-              <h2 className="text-2xl sm:text-3xl font-serif-editorial font-semibold text-white">
-                Predictable Cloudinary storage, AI Face Match credits &amp; custom domains
-              </h2>
-            </div>
-
-            <div className="flex items-center gap-1 p-1 bg-[#131B2E] border border-amber-500/30 rounded-xl self-start">
-              <button
-                type="button"
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                  billingCycle === 'monthly'
-                    ? 'bg-amber-500 text-[#0B0F17]'
-                    : 'text-slate-300'
-                }`}
-              >
-                Monthly Billing
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingCycle('annual')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                  billingCycle === 'annual'
-                    ? 'bg-amber-500 text-[#0B0F17]'
-                    : 'text-slate-300'
-                }`}
-              >
-                Annual (2 Months Free)
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan) => {
-              const price =
-                billingCycle === 'monthly'
-                  ? plan.monthlyPrice
-                  : Math.round(plan.yearlyPrice / 12);
-              const isHighlighted = plan.id === 'pro';
-              return (
-                <div
-                  key={plan.id}
-                  className={`rounded-2xl border p-6 flex flex-col justify-between space-y-6 ${
-                    isHighlighted
-                      ? 'border-amber-400 bg-[#131B2E] text-white shadow-[0_0_30px_rgba(245,158,11,0.18)]'
-                      : 'border-slate-800 bg-[#0F1624] text-slate-100'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="text-xs font-bold text-amber-400">{plan.tagline}</div>
-                    <h3 className="text-2xl font-serif-editorial font-bold">{plan.name}</h3>
-                    <div className="font-mono text-3xl font-bold tabular-nums pt-1 text-amber-300">
-                      ${price}
-                      <span className="text-xs font-normal text-slate-400">
-                        {' '}
-                        / month {billingCycle === 'annual' && '(billed annually)'}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 py-3 border-y border-slate-800 text-xs font-mono tabular-nums text-slate-300">
-                      <div>Storage: {plan.storageLimitGB} GB</div>
-                      <div>Photos: {plan.photoLimit.toLocaleString()}</div>
-                      <div>Projects: {plan.projectLimit}</div>
-                      <div>Team Seats: {plan.teamMemberLimit}</div>
-                    </div>
-
-                    <ul className="space-y-2 pt-2 text-xs text-slate-300">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-center gap-2">
-                          <span className="text-amber-400 font-bold">•</span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
+            <div className="flex flex-wrap gap-2">
+              {DEMO_TABS.map((tab) => {
+                const active = tab.id === activeDemo;
+                return (
                   <button
+                    key={tab.id}
                     type="button"
-                    onClick={onOpenOnboarding}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold transition-opacity ${
-                      isHighlighted
-                        ? 'bg-gradient-to-r from-[#F59E0B] via-[#D97706] to-[#B45309] text-[#0B0F17] hover:opacity-95'
-                        : 'bg-white text-[#0B0F17] hover:bg-amber-100'
+                    onClick={() => setActiveDemo(tab.id)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                      active
+                        ? 'border-[#D4AF37] bg-[#D4AF37] text-[#090B10]'
+                        : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]/50'
                     }`}
                   >
-                    Start with {plan.name}
+                    {tab.label}
                   </button>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center rounded-2xl border border-zinc-200 dark:border-white/10 bg-[#FAF9F6] dark:bg-[#11141D] p-6 sm:p-8">
+            <div className="lg:col-span-6 space-y-5">
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
+                <span className="text-xs font-mono uppercase tracking-[0.18em] text-[#B58E24] dark:text-[#D4AF37]">
+                  {currentDemo.statLabel}
+                </span>
+                <span className="text-xl font-mono font-semibold text-[#10B981] tabular-nums">
+                  {currentDemo.statValue}
+                </span>
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-editorial font-semibold">
+                {currentDemo.headline}
+              </h3>
+
+              <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                {currentDemo.description}
+              </p>
+
+              <ul className="space-y-2.5">
+                {currentDemo.highlights.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <Check className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                    <span className="text-zinc-700 dark:text-zinc-200">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                onClick={() => openStudioAt(currentDemo.targetModule, currentDemo.targetStage)}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition cursor-pointer"
+              >
+                Open Interactive Workspace
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="lg:col-span-6">
+              <div className="aspect-[4/3] rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10">
+                <img
+                  src={currentDemo.imageUrl}
+                  alt={currentDemo.headline}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Accordion */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-14 space-y-6">
-        <h2 className="text-2xl font-serif-editorial font-bold text-white text-center">
-          Frequently Asked Questions
-        </h2>
-        <div className="divide-y divide-slate-800 border border-amber-500/25 rounded-2xl bg-[#0F1624] overflow-hidden">
-          {faqs.map((faq, idx) => {
-            const isOpen = openFaqIndex === idx;
+      {/* 7 Core Studio Modules Grid */}
+      <section id="core-modules" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
+              Part 1 · 7 Core Software Modules
+            </p>
+            <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
+              Built for Modern Photography Studios
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => openStudioAt('culling')}
+            className="text-sm font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:underline self-start sm:self-auto cursor-pointer"
+          >
+            Launch All 7 Modules →
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {CORE_MODULES.map((mod) => {
+            const Icon = mod.icon;
             return (
-              <div key={faq.q} className="p-4 sm:p-5">
-                <button
-                  type="button"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  aria-expanded={isOpen}
-                  className="w-full flex items-center justify-between gap-4 text-left text-sm font-semibold text-white"
-                >
-                  <span>{faq.q}</span>
-                  <span className="text-xs font-mono text-amber-400">
-                    {isOpen ? '−' : '+'}
-                  </span>
-                </button>
-                {isOpen && (
-                  <p className="text-xs text-slate-300 leading-relaxed mt-2.5">{faq.a}</p>
-                )}
-              </div>
+              <button
+                key={mod.id}
+                type="button"
+                onClick={() => openStudioAt(mod.id)}
+                className="group text-left rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 hover:border-[#D4AF37] transition flex flex-col justify-between gap-4 cursor-pointer"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+                      MODULE {mod.num}
+                    </span>
+                    <Icon className="w-4 h-4 text-zinc-400 group-hover:text-[#D4AF37] transition" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                    {mod.title}
+                  </h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {mod.summary}
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-[#B58E24] dark:group-hover:text-[#D4AF37] inline-flex items-center gap-1">
+                  Open Module <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
             );
           })}
         </div>
       </section>
 
-      {/* Clean Footer */}
-      <footer className="bg-[#0B0F17] border-t border-amber-500/20 py-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <div>
-            <strong className="text-amber-300">Lumina Studio OS (pixelfotos.online)</strong> · Luxury Wedding Proofing, Cloudinary Storage &amp; AI Event Photo Platform
+      {/* 6-Stage Event Lifecycle Visualizer */}
+      <section
+        id="event-lifecycle"
+        className="border-t border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0D1017] py-16"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
+                Part 2 · Main Event Lifecycle Workflow
+              </p>
+              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
+                6 Automated Stages From Booking to Memory Lane
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => openStudioAt('lifecycle', 1)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer self-start sm:self-auto"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              Walk Through All 6 Stages
+            </button>
           </div>
-          <div className="flex flex-wrap items-center gap-5">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
+            {LIFECYCLE_STEPS.map((step) => (
+              <button
+                key={step.stage}
+                type="button"
+                onClick={() => openStudioAt('lifecycle', step.stage)}
+                className="text-left rounded-2xl border border-zinc-200 dark:border-white/10 bg-[#FAF9F6] dark:bg-[#11141D] p-4 hover:border-[#D4AF37] transition space-y-2 cursor-pointer"
+              >
+                <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
+                  Stage 0{step.stage}
+                </span>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                  {step.title}
+                </p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  {step.caption}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-200 dark:border-white/10 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-2">
+            <Aperture className="w-4 h-4 text-[#D4AF37]" />
+            <span className="font-semibold text-zinc-900 dark:text-white">PixelFotos</span>
+            <span>· www.pixelfotos.online · All-in-One Studio & Event Solution</span>
+          </div>
+
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => onOpenDashboard('overview')}
-              className="hover:text-amber-300"
+              onClick={toggleTheme}
+              className="hover:text-zinc-900 dark:hover:text-white cursor-pointer"
             >
-              Studio Dashboard
+              Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
             </button>
             <button
               type="button"
-              onClick={() => onOpenDashboard('portfolio')}
-              className="hover:text-amber-300"
+              onClick={() => openMicrositeBySlug(microsite.slug)}
+              className="hover:text-zinc-900 dark:hover:text-white cursor-pointer"
             >
-              Public Portfolio
+              Client Microsite
             </button>
             <button
               type="button"
-              onClick={() => onOpenDashboard('invitation')}
-              className="hover:text-amber-300"
+              onClick={() => openStudioAt('lifecycle', 1)}
+              className="font-semibold text-[#B58E24] dark:text-[#D4AF37] cursor-pointer"
             >
-              Wedding Website Builder
+              Studio Command →
             </button>
           </div>
         </div>
       </footer>
-
-      {/* STRICT BOTTOM NAVIGATION BAR RULE: Exact FotoOwl Bottom Navigation Bar with Luxury Dark/Gold theme */}
-      <FotoOwlFeatureBar
-        activeMode={activeFotoOwlMode}
-        onSelectMode={handleSelectFotoOwlFeature}
-        variant="bottom_nav"
-      />
     </div>
   );
 };

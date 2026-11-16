@@ -38,7 +38,7 @@ service cloud.firestore {
       );
     }
 
-    // Entity Validation Blueprints
+    // Legacy & Core Studio Validation Blueprints
     function isValidUserProfile(data) {
       return data.keys().hasAll(['uid', 'displayName', 'studioId', 'role', 'onboardingStep', 'createdAt']) &&
         data.keys().hasOnly(['uid', 'displayName', 'studioId', 'role', 'onboardingStep', 'createdAt']) &&
@@ -118,6 +118,114 @@ service cloud.firestore {
         data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
         data.selected is bool &&
         data.liked is bool &&
+        data.createdAt is timestamp;
+    }
+
+    // PixelFotos Domain Validation Blueprints
+    function isValidPixelEvent(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'slug', 'coupleOrHostName', 'eventType', 'eventDate', 'venueName', 'venueCity', 'googleMapsQuery', 'storyText', 'youtubeStreamUrl', 'isPublished', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'slug', 'coupleOrHostName', 'eventType', 'eventDate', 'venueName', 'venueCity', 'googleMapsQuery', 'storyText', 'youtubeStreamUrl', 'heroImageUrl', 'schedule', 'isPublished', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9\\-]+$') &&
+        data.coupleOrHostName is string && data.coupleOrHostName.size() >= 1 && data.coupleOrHostName.size() <= 140 &&
+        data.eventType is string && data.eventType in ['Wedding', 'Engagement', 'Birthday', 'Griha Pravesh'] &&
+        data.eventDate is string && data.eventDate.size() >= 1 && data.eventDate.size() <= 40 &&
+        data.venueName is string && data.venueName.size() >= 1 && data.venueName.size() <= 180 &&
+        data.venueCity is string && data.venueCity.size() >= 1 && data.venueCity.size() <= 120 &&
+        data.googleMapsQuery is string && data.googleMapsQuery.size() <= 240 &&
+        data.storyText is string && data.storyText.size() <= 1200 &&
+        data.youtubeStreamUrl is string && data.youtubeStreamUrl.size() <= 400 &&
+        (!('heroImageUrl' in data) || (data.heroImageUrl is string && data.heroImageUrl.size() <= 500)) &&
+        (!('schedule' in data) || (data.schedule is list && data.schedule.size() <= 20)) &&
+        data.isPublished is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCRMLead(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'phone', 'email', 'eventDate', 'packageName', 'packageValueInr', 'leadStatus', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'name', 'phone', 'email', 'eventDate', 'packageName', 'packageValueInr', 'leadStatus', 'communicationLogs', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 140 &&
+        data.phone is string && data.phone.size() <= 40 &&
+        data.email is string && data.email.size() <= 160 &&
+        data.eventDate is string && data.eventDate.size() <= 40 &&
+        data.packageName is string && data.packageName.size() <= 160 &&
+        data.packageValueInr is number && data.packageValueInr >= 0 &&
+        data.leadStatus is string && data.leadStatus in ['Inquiry', 'Booked', 'Editing', 'Delivered'] &&
+        (!('communicationLogs' in data) || (data.communicationLogs is list && data.communicationLogs.size() <= 100)) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidTeamTask(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'memberName', 'role', 'assignedEvent', 'taskTitle', 'progressPercent', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'memberName', 'role', 'assignedEvent', 'taskTitle', 'progressPercent', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.memberName is string && data.memberName.size() >= 1 && data.memberName.size() <= 120 &&
+        data.role is string && data.role in ['Lead Photographer', 'Candid Shooter', 'Cinematographer', 'Album Editor'] &&
+        data.assignedEvent is string && data.assignedEvent.size() <= 140 &&
+        data.taskTitle is string && data.taskTitle.size() >= 1 && data.taskTitle.size() <= 200 &&
+        data.progressPercent is number && data.progressPercent >= 0 && data.progressPercent <= 100 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidStudioExpense(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'eventId', 'eventName', 'category', 'description', 'amountInr', 'date', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'eventId', 'eventName', 'category', 'description', 'amountInr', 'date', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.eventId) &&
+        data.ownerId == request.auth.uid &&
+        data.eventName is string && data.eventName.size() <= 140 &&
+        data.category is string && data.category in ['Travel', 'Food', 'Freelancer Payouts', 'Equipment Rental', 'Studio Overhead'] &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 240 &&
+        data.amountInr is number && data.amountInr >= 0 &&
+        data.date is string && data.date.size() <= 40 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPrintOrder(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'photoId', 'photoFileName', 'productId', 'productName', 'category', 'dimensions', 'quantity', 'clientTotalInr', 'studioProfitInr', 'customerName', 'status', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'photoId', 'photoFileName', 'productId', 'productName', 'category', 'dimensions', 'quantity', 'clientTotalInr', 'studioProfitInr', 'customerName', 'status', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.photoId is string && data.photoId.size() <= 128 &&
+        data.photoFileName is string && data.photoFileName.size() <= 180 &&
+        data.productId is string && data.productId.size() <= 100 &&
+        data.productName is string && data.productName.size() <= 140 &&
+        data.category is string && data.category.size() <= 80 &&
+        data.dimensions is string && data.dimensions.size() <= 80 &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100 &&
+        data.clientTotalInr is number && data.clientTotalInr >= 0 &&
+        data.studioProfitInr is number &&
+        data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120 &&
+        data.status is string && data.status in ['New Order', 'In Print Lab', 'Shipped'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidInvoice(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'docNumber', 'clientId', 'clientName', 'eventTitle', 'stage', 'status', 'includeGst18', 'advancePaidInr', 'upiId', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'docNumber', 'clientId', 'clientName', 'eventTitle', 'stage', 'status', 'includeGst18', 'items', 'advancePaidInr', 'upiId', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.docNumber is string && data.docNumber.size() >= 1 && data.docNumber.size() <= 60 &&
+        data.clientId is string && data.clientId.size() <= 128 &&
+        data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 140 &&
+        data.eventTitle is string && data.eventTitle.size() <= 200 &&
+        data.stage is string && data.stage in ['Quotation', 'Invoice'] &&
+        data.status is string && data.status in ['Draft', 'Sent', 'Approved', 'Paid'] &&
+        data.includeGst18 is bool &&
+        (!('items' in data) || (data.items is list && data.items.size() <= 40)) &&
+        data.advancePaidInr is number && data.advancePaidInr >= 0 &&
+        data.upiId is string && data.upiId.size() <= 120 &&
         data.createdAt is timestamp;
     }
 
@@ -273,6 +381,117 @@ service cloud.firestore {
           (isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin()
         );
       }
+    }
+
+    // PixelFotos Studio Events & Public Microsites
+    match /studio_events/{eventId} {
+      allow get: if isValidId(eventId) && (
+        existing().isPublished == true ||
+        (isSignedIn() && existing().ownerId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow list: if existing().isPublished == true || (isSignedIn() && existing().ownerId == request.auth.uid);
+      allow create: if isVerifiedUser() && isValidId(eventId) && isValidPixelEvent(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(eventId) && isValidPixelEvent(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['slug', 'coupleOrHostName', 'eventType', 'eventDate', 'venueName', 'venueCity', 'googleMapsQuery', 'storyText', 'youtubeStreamUrl', 'heroImageUrl', 'schedule', 'isPublished', 'updatedAt'])
+        )
+      );
+      allow delete: if isValidId(eventId) && (
+        (isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin()
+      );
+    }
+
+    // Studio CRM Leads
+    match /crm_leads/{leadId} {
+      allow get: if isValidId(leadId) && ((isSignedIn() && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(leadId) && isValidCRMLead(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(leadId) && isValidCRMLead(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['leadStatus', 'communicationLogs', 'packageName', 'packageValueInr'])
+        )
+      );
+      allow delete: if isValidId(leadId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
+    }
+
+    // Studio Team Tasks
+    match /team_tasks/{taskId} {
+      allow get: if isValidId(taskId) && ((isSignedIn() && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(taskId) && isValidTeamTask(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(taskId) && isValidTeamTask(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['progressPercent', 'taskTitle', 'role'])
+        )
+      );
+      allow delete: if isValidId(taskId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
+    }
+
+    // Studio Expenses
+    match /expenses/{expenseId} {
+      allow get: if isValidId(expenseId) && ((isSignedIn() && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(expenseId) && isValidStudioExpense(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(expenseId) && isValidStudioExpense(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['amountInr', 'description', 'category'])
+        )
+      );
+      allow delete: if isValidId(expenseId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
+    }
+
+    // Print Store Orders
+    match /print_orders/{orderId} {
+      allow get: if isValidId(orderId) && ((isSignedIn() && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(orderId) && isValidPrintOrder(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(orderId) && isValidPrintOrder(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          existing().status != 'Shipped' &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+        )
+      );
+      allow delete: if isValidId(orderId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
+    }
+
+    // Invoices & Quotations
+    match /invoices/{invoiceId} {
+      allow get: if isValidId(invoiceId) && ((isSignedIn() && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(invoiceId) && isValidInvoice(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(invoiceId) && isValidInvoice(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          existing().status != 'Paid' &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['docNumber', 'stage', 'status', 'advancePaidInr', 'upiId', 'includeGst18', 'items'])
+        )
+      );
+      allow delete: if isValidId(invoiceId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
     }
   }
 }

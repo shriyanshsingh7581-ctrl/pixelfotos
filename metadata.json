@@ -1,6 +1,6 @@
 {
-  "name": "Lumina Studio OS — Photography SaaS & Client Proofing Platform",
-  "description": "All-in-one photography studio management, bulk Cloudinary photo delivery, QR event sharing, client album selection, online photo editor, and studio CRM.",
+  "name": "PixelFotos — All-in-One AI Photography, Live Guest Gallery & Studio OS",
+  "description": "All-in-one AI photography platform with human-like AI culling, custom LUT grading, 1-click album retouch, dedicated event micro-websites, branded client print store, studio CRM, and UPI billing.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
