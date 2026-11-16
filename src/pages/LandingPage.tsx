@@ -11,7 +11,6 @@ import {
   Palette,
   QrCode,
   Receipt,
-  ScanFace,
   Sparkles,
   Sun,
   Users,
@@ -20,6 +19,7 @@ import {
 import { usePixelFotos } from '../contexts/PixelFotosContext';
 import { PIXELFOTOS_ASSETS } from '../data/pixelfotosData';
 import { LifecycleStageNumber, StudioModuleId } from '../types/pixelfotos';
+import { MobileBottomDock } from '../components/shared/MobileBottomDock';
 
 type DemoModeId = 'culling' | 'live_sync' | 'face_match' | 'print_upi';
 
@@ -71,7 +71,7 @@ const DEMO_TABS: {
   {
     id: 'face_match',
     label: 'AI Face Match ("Only You")',
-    headline: '128+ Personalized Guest Streams & RAW Matching',
+    headline: '128-d Personalized Guest Streams & RAW Matching',
     description:
       'Guests browse "Only You" instead of scrolling 6,000+ images, heart their favorites, and let your studio locate exact camera RAW filenames (.CR3/.ARW) in one click.',
     statLabel: 'RAW Archive Indexed',
@@ -108,55 +108,63 @@ const CORE_MODULES: {
   num: string;
   title: string;
   summary: string;
+  spanClass: string;
   icon: React.FC<{ className?: string }>;
 }[] = [
   {
     id: 'culling',
     num: '01',
     title: 'AI Photo Culling',
-    summary: 'Detects closed eyes, blur, duplicates & groups poses with 1–5 star ratings and CSV export.',
+    summary: 'Laplacian blur detection, duplicate dHash clustering, 1–5 star ratings, and instant ZIP export.',
+    spanClass: 'md:col-span-1 lg:col-span-6',
     icon: Sparkles,
   },
   {
     id: 'retouch_lut',
     num: '02',
     title: 'AI Retouch & .CUBE LUTs',
-    summary: 'Upload custom .cube/.3dl LUTs, batch exposure match, and apply logo/text watermarks.',
+    summary: 'Upload custom .cube/.3dl LUTs for trilinear pixel grading, exposure match, and logo/text watermarks.',
+    spanClass: 'md:col-span-1 lg:col-span-6',
     icon: Palette,
   },
   {
     id: 'album_retouch',
     num: '03',
     title: '1-Click Album AI Retouch',
-    summary: 'Natural skin blemish, flyaway hair, flash glare & background softening across full albums.',
+    summary: 'Natural skin glare roll-off, flyaway hair refinement, and optical softening across album spreads.',
+    spanClass: 'md:col-span-1 lg:col-span-4',
     icon: Wand2,
   },
   {
     id: 'microsite_builder',
     num: '04',
     title: 'Event Microsite Generator',
-    summary: 'Custom pixelfotos.online/slug sites with Couple Story, Google Maps, Schedule & YouTube Live.',
+    summary: 'Custom pixelfotos.online/slug portals with Story, Google Maps, Itinerary & YouTube Live.',
+    spanClass: 'md:col-span-1 lg:col-span-4',
     icon: Globe,
   },
   {
     id: 'print_store',
     num: '05',
     title: 'Client Gallery & Print Store',
-    summary: 'Studio branding, 4-digit PIN gates, download controls, and framed print/album profit margins.',
+    summary: 'Studio branding, 4-digit PIN gates, download controls, and museum frame profit margins.',
+    spanClass: 'md:col-span-1 lg:col-span-4',
     icon: Frame,
   },
   {
     id: 'crm_expenses',
     num: '06',
     title: 'Studio CRM, Team & P&L',
-    summary: 'Client pipeline logs, crew task progress sliders, and real-time Net Profit per Event.',
+    summary: 'Client pipeline logs, crew shoot deliverable sliders, and real-time Net Profit per Event.',
+    spanClass: 'md:col-span-1 lg:col-span-6',
     icon: Users,
   },
   {
     id: 'billing_upi',
     num: '07',
     title: 'Billing, Quotes & UPI QR',
-    summary: 'Itemized GST quotation-to-invoice converter with scannable UPI QR & instant ledger sync.',
+    summary: 'Itemized GST quotation-to-invoice converter, downloadable A4 PDF, and dynamic 0% fee UPI QR.',
+    spanClass: 'md:col-span-2 lg:col-span-6',
     icon: Receipt,
   },
 ];
@@ -166,36 +174,12 @@ const LIFECYCLE_STEPS: {
   title: string;
   caption: string;
 }[] = [
-  {
-    stage: 1,
-    title: 'Create the Event',
-    caption: 'Auto-slug microsite + 1-click WhatsApp invite',
-  },
-  {
-    stage: 2,
-    title: 'At the Event QR',
-    caption: 'Printable standee + guest selfie check-in',
-  },
-  {
-    stage: 3,
-    title: 'Live C-to-C Sync',
-    caption: 'USB-C camera-to-phone stream in 48 sec',
-  },
-  {
-    stage: 4,
-    title: 'AI Face Match',
-    caption: '"Only You" guest gallery + live ❤️ hearts',
-  },
-  {
-    stage: 5,
-    title: 'Locate Originals',
-    caption: 'Match guest likes to 6,240+ RAW files',
-  },
-  {
-    stage: 6,
-    title: '2 Months Later',
-    caption: 'Memory Lane reel + 5★ Google Review alert',
-  },
+  { stage: 1, title: 'Create the Event', caption: 'Auto-slug microsite + WhatsApp invite' },
+  { stage: 2, title: 'At the Event QR', caption: 'Printable standee + 128-d selfie scan' },
+  { stage: 3, title: 'Live C-to-C Sync', caption: 'USB-C camera-to-phone in 48 sec' },
+  { stage: 4, title: 'AI Face Match', caption: '"Only You" feed + synced hearts' },
+  { stage: 5, title: 'Locate Originals', caption: 'Copy matched RAWs into subfolder' },
+  { stage: 6, title: '2 Months Later', caption: 'Memory Lane + 5-Star Google Review' },
 ];
 
 export const LandingPage: React.FC = () => {
@@ -205,93 +189,104 @@ export const LandingPage: React.FC = () => {
   const currentDemo = DEMO_TABS.find((d) => d.id === activeDemo) || DEMO_TABS[0];
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#090B10] text-zinc-900 dark:text-white transition-colors">
-      {/* Strict 3-Zone Top Navigation Bar */}
-      <header className="sticky top-0 z-40 h-16 border-b border-zinc-200 dark:border-white/10 bg-[#FAF9F6]/90 dark:bg-[#090B10]/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          {/* Zone 1: Brand Identity */}
-          <a href="#top" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-[#D4AF37] text-[#090B10] flex items-center justify-center">
-              <Aperture className="w-5 h-5" />
+    <div className="min-h-screen liquid-canvas text-zinc-900 dark:text-[#F5F5F7] pb-[120px] md:pb-0 transition-colors">
+      {/* Floating Apple.com Frosted Glass Navigation Bar */}
+      <div className="sticky top-0 z-40 px-3 sm:px-6 lg:px-8 pt-2.5 sm:pt-3.5">
+        <header className="max-w-7xl mx-auto h-14 sm:h-16 px-4 sm:px-6 rounded-[20px] sm:rounded-[24px] liquid-glass-dock flex items-center justify-between gap-4 sm:gap-8">
+          {/* Zone 1: Brand Wordmark */}
+          <a href="#top" className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#D4AF37] text-[#090B10] flex items-center justify-center shadow-sm">
+              <Aperture className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="text-lg font-semibold tracking-tight whitespace-nowrap">
-              PixelFotos
-            </span>
+            <span className="text-base sm:text-lg font-semibold tracking-tight">PixelFotos</span>
           </a>
 
-          {/* Zone 2: 4 Clean Navigation Links */}
+          {/* Zone 2: Clean Single-Line Nav Links */}
           <nav className="hidden md:flex items-center gap-7">
             <a
               href="#live-demo"
-              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition whitespace-nowrap shrink-0"
             >
               Live Demo
             </a>
             <a
               href="#core-modules"
-              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition whitespace-nowrap shrink-0"
             >
               Core Modules
             </a>
             <a
               href="#event-lifecycle"
-              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition whitespace-nowrap shrink-0"
             >
               Event Lifecycle
             </a>
             <button
               type="button"
               onClick={() => openMicrositeBySlug(microsite.slug)}
-              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-[#B58E24] dark:hover:text-[#D4AF37] whitespace-nowrap shrink-0 cursor-pointer"
+              className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition whitespace-nowrap shrink-0 cursor-pointer"
             >
               Client Microsite
             </button>
           </nav>
 
-          {/* Zone 3: Primary Studio CTA */}
-          <button
-            type="button"
-            onClick={() => openStudioAt('lifecycle', 1)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            Launch Studio
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
+          {/* Zone 3: Primary Action CTA (plus compact theme toggle on mobile top bar) */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle Light and Dark Theme"
+              className="md:hidden min-w-[40px] min-h-[40px] rounded-xl liquid-glass-subtle flex items-center justify-center text-zinc-700 dark:text-zinc-200 cursor-pointer"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-[#D4AF37]" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => openStudioAt('lifecycle', 1)}
+              className="min-h-[40px] inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] active:scale-[0.98] transition whitespace-nowrap shrink-0 cursor-pointer shadow-sm"
+            >
+              Launch Studio
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+      </div>
 
-      {/* Editorial Split Hero */}
-      <section id="top" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 lg:pt-16 lg:pb-20">
+      {/* Apple.com Cinematic Split Hero */}
+      <section
+        id="top"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
-          {/* Left Narrative Column */}
+          {/* Narrative Bento Column */}
           <div className="lg:col-span-6 flex flex-col justify-between space-y-8">
             <div className="space-y-5">
-              <p className="text-xs font-mono uppercase tracking-[0.26em] text-[#B58E24] dark:text-[#D4AF37]">
-                pixelfotos.online · All-in-One Studio & Event OS
+              <p className="text-xs font-mono tracking-wide text-[#B58E24] dark:text-[#D4AF37]">
+                pixelfotos.online · All-in-One Studio &amp; Event OS
               </p>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-[64px] font-editorial font-semibold leading-[1.03] tracking-tight text-zinc-900 dark:text-white">
-                AI Photography, Live Guest Galleries & Studio Command.
+              <h1 className="text-4xl sm:text-5xl lg:text-[62px] font-semibold leading-[1.04] tracking-tight text-zinc-900 dark:text-white">
+                AI Photography, Live Guest Galleries &amp; Studio Command.
               </h1>
 
               <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-300 max-w-xl leading-relaxed">
-                Cull thousands of shoots with human-like AI precision, stream USB-C camera shots to guest WhatsApp in 48 seconds, sell framed prints, and manage GST billing with instant UPI QR.
+                Cull shoots with HTML5 Canvas Laplacian sharpness detection, grade with real .CUBE 3D LUTs, match guest selfies via 128-d face vectors, and collect instant GST UPI payments.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => openStudioAt('culling')}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer whitespace-nowrap"
+                  className="min-h-[46px] inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] active:scale-[0.98] transition cursor-pointer whitespace-nowrap shadow-lg shadow-[#D4AF37]/15"
                 >
-                  Launch Studio Command
+                  Open Studio Workspace
                   <ArrowRight className="w-4 h-4" />
                 </button>
 
                 <button
                   type="button"
                   onClick={() => openMicrositeBySlug(microsite.slug)}
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold border border-zinc-300 dark:border-white/15 bg-white dark:bg-[#11141D] text-zinc-900 dark:text-white hover:border-[#D4AF37] transition cursor-pointer whitespace-nowrap"
+                  className="min-h-[46px] inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold liquid-glass text-zinc-900 dark:text-white hover:border-[#D4AF37]/60 active:scale-[0.98] transition cursor-pointer whitespace-nowrap"
                 >
                   <ExternalLink className="w-4 h-4 text-[#D4AF37]" />
                   Preview /{microsite.slug}
@@ -301,79 +296,81 @@ export const LandingPage: React.FC = () => {
                   type="button"
                   onClick={toggleTheme}
                   aria-label="Toggle Light and Dark Theme"
-                  className="inline-flex items-center gap-2 px-3.5 py-3.5 rounded-xl text-xs font-mono border border-zinc-300 dark:border-white/15 bg-white dark:bg-[#11141D] text-zinc-700 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
+                  className="hidden md:inline-flex min-h-[46px] items-center gap-2 px-4 py-3 rounded-full text-xs font-medium liquid-glass-subtle text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37]/50 cursor-pointer"
                 >
                   {theme === 'dark' ? (
                     <>
                       <Sun className="w-4 h-4 text-[#D4AF37]" />
-                      Light
+                      Daylight Pearl
                     </>
                   ) : (
                     <>
                       <Moon className="w-4 h-4 text-[#B58E24]" />
-                      Dark
+                      Studio Dark
                     </>
                   )}
                 </button>
               </div>
             </div>
 
-            {/* 3-Column Metrics Bar */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-zinc-200 dark:border-white/10">
-              <div>
-                <p className="text-2xl sm:text-3xl font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
+            {/* 3-Column Frosted Bento Metric Strip */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="liquid-glass rounded-[20px] p-4">
+                <p className="text-xl sm:text-2xl font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
                   48 sec
                 </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                   C-to-C Camera Sync
                 </p>
               </div>
-              <div>
-                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#B58E24] dark:text-[#D4AF37] tabular-nums">
-                  6,240+
+              <div className="liquid-glass rounded-[20px] p-4">
+                <p className="text-xl sm:text-2xl font-mono font-semibold text-[#B58E24] dark:text-[#D4AF37] tabular-nums">
+                  128-d AI
                 </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  RAW Original Matcher
+                <p className="mt-1 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                  Biometric Face Match
                 </p>
               </div>
-              <div>
-                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#10B981] tabular-nums">
-                  7 Modules
+              <div className="liquid-glass rounded-[20px] p-4">
+                <p className="text-xl sm:text-2xl font-mono font-semibold text-[#10B981] tabular-nums">
+                  0% Fee
                 </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  Zero-Commission UPI
+                <p className="mt-1 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                  Direct UPI QR &amp; PDF
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Right Editorial Hero Image Card */}
+          {/* Right visionOS Floating Frosted Hero Frame */}
           <div className="lg:col-span-6">
-            <div className="relative h-full min-h-[400px] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10 shadow-2xl">
-              <img
-                src={PIXELFOTOS_ASSETS.heroRoyalWedding}
-                alt="Ananya & Kabir Royal Udaipur Wedding Editorial Portrait"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#090B10] via-[#090B10]/20 to-transparent" />
-              <div className="absolute bottom-5 inset-x-5 rounded-xl border border-white/15 bg-[#090B10]/75 backdrop-blur-md p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
-                <div>
-                  <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#D4AF37]">
-                    Live Showcase · Udaipur
-                  </p>
-                  <p className="text-sm font-semibold">
-                    {microsite.coupleOrHostName} · pixelfotos.online/{microsite.slug}
-                  </p>
+            <div className="relative h-full min-h-[360px] sm:min-h-[440px] rounded-[28px] overflow-hidden liquid-glass p-2">
+              <div className="relative w-full h-full rounded-[22px] overflow-hidden">
+                <img
+                  src={PIXELFOTOS_ASSETS.heroRoyalWedding}
+                  alt="Ananya & Kabir Royal Udaipur Wedding Editorial Portrait"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 inset-x-4 rounded-[20px] liquid-glass-dock p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-mono text-[#B58E24] dark:text-[#D4AF37]">
+                      Live Event Showcase · {microsite.venueCity}
+                    </p>
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+                      {microsite.coupleOrHostName} · /{microsite.slug}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openStudioAt('lifecycle', 2)}
+                    className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] whitespace-nowrap cursor-pointer shrink-0"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                    Inspect Event QR
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => openStudioAt('lifecycle', 2)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] whitespace-nowrap cursor-pointer"
-                >
-                  <QrCode className="w-3.5 h-3.5" />
-                  Inspect Event QR
-                </button>
               </div>
             </div>
           </div>
@@ -381,102 +378,97 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Interactive Live Demo Switcher */}
-      <section
-        id="live-demo"
-        className="border-y border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0D1017] py-16"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-            <div>
-              <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
-                Interactive Platform Preview
-              </p>
-              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
-                Explore Every Studio Capability Live
-              </h2>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {DEMO_TABS.map((tab) => {
-                const active = tab.id === activeDemo;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveDemo(tab.id)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                      active
-                        ? 'border-[#D4AF37] bg-[#D4AF37] text-[#090B10]'
-                        : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]/50'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
+      <section id="live-demo" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+          <div>
+            <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+              Interactive Platform Preview
+            </p>
+            <h2 className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">
+              Explore Every Studio Capability Live
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center rounded-2xl border border-zinc-200 dark:border-white/10 bg-[#FAF9F6] dark:bg-[#11141D] p-6 sm:p-8">
-            <div className="lg:col-span-6 space-y-5">
-              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
-                <span className="text-xs font-mono uppercase tracking-[0.18em] text-[#B58E24] dark:text-[#D4AF37]">
-                  {currentDemo.statLabel}
-                </span>
-                <span className="text-xl font-mono font-semibold text-[#10B981] tabular-nums">
-                  {currentDemo.statValue}
-                </span>
-              </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 liquid-glass-subtle p-1.5 rounded-[18px]">
+            {DEMO_TABS.map((tab) => {
+              const active = tab.id === activeDemo;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveDemo(tab.id)}
+                  className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
+                    active
+                      ? 'bg-[#D4AF37] text-[#090B10] shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-              <h3 className="text-2xl sm:text-3xl font-editorial font-semibold">
-                {currentDemo.headline}
-              </h3>
-
-              <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                {currentDemo.description}
-              </p>
-
-              <ul className="space-y-2.5">
-                {currentDemo.highlights.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm">
-                    <Check className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
-                    <span className="text-zinc-700 dark:text-zinc-200">{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                type="button"
-                onClick={() => openStudioAt(currentDemo.targetModule, currentDemo.targetStage)}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition cursor-pointer"
-              >
-                Open Interactive Workspace
-                <ArrowRight className="w-4 h-4" />
-              </button>
+        <div className="liquid-glass rounded-[28px] p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-7 items-center">
+          <div className="lg:col-span-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-black/8 dark:border-white/10 pb-3">
+              <span className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+                {currentDemo.statLabel}
+              </span>
+              <span className="text-xl font-mono font-semibold text-[#10B981] tabular-nums">
+                {currentDemo.statValue}
+              </span>
             </div>
 
-            <div className="lg:col-span-6">
-              <div className="aspect-[4/3] rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10">
-                <img
-                  src={currentDemo.imageUrl}
-                  alt={currentDemo.headline}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+              {currentDemo.headline}
+            </h3>
+
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed">
+              {currentDemo.description}
+            </p>
+
+            <ul className="space-y-2.5">
+              {currentDemo.highlights.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm">
+                  <Check className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0" />
+                  <span className="text-zinc-700 dark:text-zinc-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button
+              type="button"
+              onClick={() => openStudioAt(currentDemo.targetModule, currentDemo.targetStage)}
+              className="min-h-[44px] inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 active:scale-[0.98] transition cursor-pointer"
+            >
+              Open Interactive Workspace
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="lg:col-span-6">
+            <div className="aspect-[4/3] rounded-[20px] overflow-hidden border border-black/10 dark:border-white/12">
+              <img
+                src={currentDemo.imageUrl}
+                alt={currentDemo.headline}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 7 Core Studio Modules Grid */}
-      <section id="core-modules" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
+      {/* 7 Core Studio Modules — Asymmetric Apple Bento Grid */}
+      <section id="core-modules" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
-              Part 1 · 7 Core Software Modules
+            <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+              Part 1 · 7 Core Studio Modules
             </p>
-            <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
+            <h2 className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">
               Built for Modern Photography Studios
             </h2>
           </div>
@@ -489,7 +481,7 @@ export const LandingPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
           {CORE_MODULES.map((mod) => {
             const Icon = mod.icon;
             return (
@@ -497,24 +489,26 @@ export const LandingPage: React.FC = () => {
                 key={mod.id}
                 type="button"
                 onClick={() => openStudioAt(mod.id)}
-                className="group text-left rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 hover:border-[#D4AF37] transition flex flex-col justify-between gap-4 cursor-pointer"
+                className={`${mod.spanClass} group text-left liquid-glass rounded-[24px] p-6 hover:-translate-y-0.5 hover:border-[#D4AF37]/50 flex flex-col justify-between gap-5 cursor-pointer`}
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-                      MODULE {mod.num}
+                      {mod.num}. Module
                     </span>
-                    <Icon className="w-4 h-4 text-zinc-400 group-hover:text-[#D4AF37] transition" />
+                    <div className="w-9 h-9 rounded-xl liquid-glass-subtle flex items-center justify-center text-zinc-500 dark:text-zinc-300 group-hover:text-[#D4AF37] transition">
+                      <Icon className="w-4 h-4" />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white">
                     {mod.title}
                   </h3>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                     {mod.summary}
                   </p>
                 </div>
-                <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-[#B58E24] dark:group-hover:text-[#D4AF37] inline-flex items-center gap-1">
-                  Open Module <ArrowRight className="w-3.5 h-3.5" />
+                <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-[#B58E24] dark:group-hover:text-[#D4AF37] inline-flex items-center gap-1.5">
+                  Open Workspace <ArrowRight className="w-3.5 h-3.5" />
                 </span>
               </button>
             );
@@ -522,61 +516,54 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 6-Stage Event Lifecycle Visualizer */}
-      <section
-        id="event-lifecycle"
-        className="border-t border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0D1017] py-16"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
-                Part 2 · Main Event Lifecycle Workflow
-              </p>
-              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
-                6 Automated Stages From Booking to Memory Lane
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => openStudioAt('lifecycle', 1)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer self-start sm:self-auto"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              Walk Through All 6 Stages
-            </button>
+      {/* 6-Stage Event Lifecycle Bento Track */}
+      <section id="event-lifecycle" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+              Part 2 · Main Event Lifecycle Workflow
+            </p>
+            <h2 className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">
+              6 Automated Stages From Booking to Memory Lane
+            </h2>
           </div>
+          <button
+            type="button"
+            onClick={() => openStudioAt('lifecycle', 1)}
+            className="min-h-[42px] inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer self-start sm:self-auto"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Walk Through All 6 Stages
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
-            {LIFECYCLE_STEPS.map((step) => (
-              <button
-                key={step.stage}
-                type="button"
-                onClick={() => openStudioAt('lifecycle', step.stage)}
-                className="text-left rounded-2xl border border-zinc-200 dark:border-white/10 bg-[#FAF9F6] dark:bg-[#11141D] p-4 hover:border-[#D4AF37] transition space-y-2 cursor-pointer"
-              >
-                <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
-                  Stage 0{step.stage}
-                </span>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                  {step.title}
-                </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  {step.caption}
-                </p>
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
+          {LIFECYCLE_STEPS.map((step) => (
+            <button
+              key={step.stage}
+              type="button"
+              onClick={() => openStudioAt('lifecycle', step.stage)}
+              className="text-left liquid-glass rounded-[22px] p-4.5 hover:-translate-y-0.5 hover:border-[#D4AF37]/50 space-y-2 cursor-pointer"
+            >
+              <span className="text-[11px] font-mono text-[#B58E24] dark:text-[#D4AF37]">
+                Stage 0{step.stage}
+              </span>
+              <p className="text-sm font-semibold text-zinc-900 dark:text-white">{step.title}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                {step.caption}
+              </p>
+            </button>
+          ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-200 dark:border-white/10 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Quiet Editorial Footer */}
+      <footer className="border-t border-black/8 dark:border-white/10 py-8 px-4 sm:px-6 lg:px-8 mt-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 dark:text-zinc-400">
           <div className="flex items-center gap-2">
             <Aperture className="w-4 h-4 text-[#D4AF37]" />
             <span className="font-semibold text-zinc-900 dark:text-white">PixelFotos</span>
-            <span>· www.pixelfotos.online · All-in-One Studio & Event Solution</span>
+            <span>· www.pixelfotos.online · All-in-One Studio &amp; Event Solution</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -585,7 +572,7 @@ export const LandingPage: React.FC = () => {
               onClick={toggleTheme}
               className="hover:text-zinc-900 dark:hover:text-white cursor-pointer"
             >
-              Switch to {theme === 'dark' ? 'Light' : 'Dark'} Mode
+              {theme === 'dark' ? 'Daylight Pearl' : 'Pro Studio Dark'}
             </button>
             <button
               type="button"
@@ -604,6 +591,9 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Floating Glass Bottom Navigation Dock */}
+      <MobileBottomDock />
     </div>
   );
 };

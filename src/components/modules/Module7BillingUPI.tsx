@@ -16,6 +16,7 @@ import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
 import { InvoiceLineItem, QuotationInvoiceRecord } from '../../types/pixelfotos';
+import { BottomSheetModal } from '../shared/BottomSheetModal';
 import { QrCodeCanvas } from '../shared/QrCodeCanvas';
 
 function computeDocTotals(doc: QuotationInvoiceRecord) {
@@ -233,13 +234,13 @@ export const Module7BillingUPI: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-zinc-200 dark:border-white/10 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-5">
         <div>
           <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
             Module 07 · Studio Cashflow
           </p>
-          <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
-            Billing, Quotation & UPI Payment QR
+          <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
+            Billing, Quotation &amp; UPI Payment QR
           </h2>
           <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
             Draft itemized wedding quotations, convert approved quotes to GST invoices in one click, and collect instant balance payments via dynamic UPI QR codes.
@@ -247,25 +248,25 @@ export const Module7BillingUPI: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] text-xs font-mono">
+          <div className="min-h-[44px] inline-flex items-center px-4 py-2 rounded-full liquid-glass-subtle text-xs font-mono">
             Ledger Collected:{' '}
-            <span className="font-semibold text-[#10B981] tabular-nums">
+            <span className="ml-1.5 font-semibold text-[#10B981] tabular-nums">
               ₹{totalCollectedRevenueInr.toLocaleString('en-IN')}
             </span>
           </div>
           <button
             type="button"
-            onClick={() => setShowNewModal((v) => !v)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer"
+            onClick={() => setShowNewModal(true)}
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            {showNewModal ? 'Close Builder' : 'New Quotation'}
+            New Quotation
           </button>
         </div>
       </div>
 
       {upiNotice && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 text-sm text-emerald-800 dark:text-emerald-200">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border border-[#10B981]/35 bg-[#10B981]/12 backdrop-blur-md text-sm text-emerald-900 dark:text-emerald-200">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-[#10B981] shrink-0" />
             <span>{upiNotice}</span>
@@ -273,29 +274,55 @@ export const Module7BillingUPI: React.FC = () => {
           <button
             type="button"
             onClick={() => setUpiNotice(null)}
-            className="text-xs font-mono uppercase tracking-wider cursor-pointer"
+            className="min-h-[36px] px-2.5 text-xs font-mono uppercase tracking-wider cursor-pointer"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* New Quotation Builder Drawer */}
-      {showNewModal && (
+      {/* New Quotation Builder Bottom Sheet Modal */}
+      <BottomSheetModal
+        open={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        title="Create Itemized Studio Quotation"
+        subtitle="Module 07 · Studio Billing & GST"
+        maxWidthClass="md:max-w-3xl"
+        footer={
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleAddDraftRow}
+              className="inline-flex items-center gap-1.5 min-h-[44px] px-4 rounded-full liquid-glass-subtle text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Row
+            </button>
+            <button
+              type="submit"
+              form="billing-new-quote-form"
+              className="flex-1 sm:flex-none min-h-[46px] px-6 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer"
+            >
+              Save Quotation
+            </button>
+          </div>
+        }
+      >
         <form
+          id="billing-new-quote-form"
           onSubmit={handleCreateQuotation}
-          className="rounded-2xl border border-[#D4AF37]/40 bg-white dark:bg-[#11141D] p-5 space-y-4"
+          className="space-y-4"
         >
-          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
-              Create Itemized Studio Quotation
-            </h3>
-            <label className="inline-flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">
+          <div className="flex items-center justify-between pb-2 border-b border-black/10 dark:border-white/10">
+            <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Tax &amp; Recipient Details
+            </span>
+            <label className="inline-flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer min-h-[36px]">
               <input
                 type="checkbox"
                 checked={includeGst18}
                 onChange={(e) => setIncludeGst18(e.target.checked)}
-                className="accent-[#D4AF37]"
+                className="w-4 h-4 accent-[#D4AF37]"
               />
               Include 18% GST
             </label>
@@ -308,7 +335,7 @@ export const Module7BillingUPI: React.FC = () => {
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               required
-              className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <input
               type="text"
@@ -316,20 +343,23 @@ export const Module7BillingUPI: React.FC = () => {
               value={eventTitle}
               onChange={(e) => setEventTitle(e.target.value)}
               required
-              className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <input
               type="text"
               placeholder="Studio UPI ID (e.g. studio@okaxis)"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono text-zinc-900 dark:text-white"
+              className="min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm font-mono text-zinc-900 dark:text-white"
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {draftItems.map((item, idx) => (
-              <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
+              <div
+                key={item.id}
+                className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center p-3 rounded-[18px] liquid-glass-subtle sm:p-0 sm:bg-transparent sm:border-0 sm:backdrop-blur-none"
+              >
                 <input
                   type="text"
                   value={item.service}
@@ -339,7 +369,7 @@ export const Module7BillingUPI: React.FC = () => {
                     )
                   }
                   placeholder="Service"
-                  className="col-span-5 px-3 py-2 rounded-lg border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-xs text-zinc-900 dark:text-white"
+                  className="sm:col-span-5 min-h-[42px] px-3 py-2 rounded-xl liquid-input text-xs text-zinc-900 dark:text-white"
                 />
                 <input
                   type="text"
@@ -352,66 +382,51 @@ export const Module7BillingUPI: React.FC = () => {
                     )
                   }
                   placeholder="Deliverables"
-                  className="col-span-3 px-3 py-2 rounded-lg border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-xs text-zinc-900 dark:text-white"
+                  className="sm:col-span-3 min-h-[42px] px-3 py-2 rounded-xl liquid-input text-xs text-zinc-900 dark:text-white"
                 />
-                <input
-                  type="number"
-                  min={1}
-                  value={item.qty}
-                  onChange={(e) =>
-                    setDraftItems((prev) =>
-                      prev.map((row, i) =>
-                        i === idx ? { ...row, qty: Math.max(1, Number(e.target.value)) } : row
+                <div className="grid grid-cols-12 sm:contents gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.qty}
+                    onChange={(e) =>
+                      setDraftItems((prev) =>
+                        prev.map((row, i) =>
+                          i === idx ? { ...row, qty: Math.max(1, Number(e.target.value)) } : row
+                        )
                       )
-                    )
-                  }
-                  className="col-span-1 px-2 py-2 rounded-lg border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-xs font-mono text-zinc-900 dark:text-white"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={item.rateInr}
-                  onChange={(e) =>
-                    setDraftItems((prev) =>
-                      prev.map((row, i) =>
-                        i === idx ? { ...row, rateInr: Math.max(0, Number(e.target.value)) } : row
+                    }
+                    className="col-span-4 sm:col-span-1 min-h-[42px] px-2.5 py-2 rounded-xl liquid-input text-xs font-mono text-zinc-900 dark:text-white"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.rateInr}
+                    onChange={(e) =>
+                      setDraftItems((prev) =>
+                        prev.map((row, i) =>
+                          i === idx ? { ...row, rateInr: Math.max(0, Number(e.target.value)) } : row
+                        )
                       )
-                    )
-                  }
-                  className="col-span-2 px-3 py-2 rounded-lg border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-xs font-mono text-zinc-900 dark:text-white tabular-nums"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDraftItems((prev) => prev.filter((_, i) => i !== idx))
-                  }
-                  aria-label="Remove line item"
-                  className="col-span-1 flex justify-center text-zinc-400 hover:text-rose-500 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                    }
+                    className="col-span-6 sm:col-span-2 min-h-[42px] px-3 py-2 rounded-xl liquid-input text-xs font-mono text-zinc-900 dark:text-white tabular-nums"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDraftItems((prev) => prev.filter((_, i) => i !== idx))
+                    }
+                    aria-label="Remove line item"
+                    className="col-span-2 sm:col-span-1 min-h-[42px] flex items-center justify-center rounded-xl text-zinc-400 hover:text-rose-500 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleAddDraftRow}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Service Row
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
-            >
-              Save Quotation
-            </button>
-          </div>
         </form>
-      )}
+      </BottomSheetModal>
 
       {/* Main Split: Document List + Live Invoice & UPI QR */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -424,10 +439,10 @@ export const Module7BillingUPI: React.FC = () => {
               <div
                 key={doc.id}
                 onClick={() => setSelectedDocId(doc.id)}
-                className={`rounded-2xl border p-4 cursor-pointer transition ${
+                className={`rounded-[22px] p-4 sm:p-5 cursor-pointer transition ${
                   selected
-                    ? 'border-[#D4AF37] bg-white dark:bg-[#11141D] ring-1 ring-[#D4AF37]/40'
-                    : 'border-zinc-200 dark:border-white/10 bg-white/70 dark:bg-[#11141D]/70 hover:border-zinc-400'
+                    ? 'liquid-glass border-[#D4AF37] ring-1 ring-[#D4AF37]/40'
+                    : 'liquid-glass-subtle hover:border-[#D4AF37]/40'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -450,8 +465,8 @@ export const Module7BillingUPI: React.FC = () => {
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                   {doc.eventTitle}
                 </p>
-                <div className="mt-3 pt-2.5 border-t border-zinc-200 dark:border-white/10 flex items-center justify-between text-xs font-mono tabular-nums">
-                  <span className="text-zinc-500">
+                <div className="mt-3 pt-2.5 border-t border-black/10 dark:border-white/10 flex items-center justify-between text-xs font-mono tabular-nums">
+                  <span className="text-zinc-500 dark:text-zinc-400">
                     Total ₹{totals.grandTotal.toLocaleString('en-IN')}
                   </span>
                   <span className="font-semibold text-zinc-900 dark:text-white">
@@ -467,12 +482,12 @@ export const Module7BillingUPI: React.FC = () => {
         {activeDoc && activeTotals && (
           <div className="xl:col-span-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Invoice Breakdown */}
-            <div className="lg:col-span-7 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-200 dark:border-white/10 pb-4">
+            <div className="lg:col-span-7 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/10 dark:border-white/10 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <Receipt className="w-4 h-4 text-[#D4AF37]" />
-                    <span className="text-xs font-mono uppercase tracking-[0.18em] text-zinc-500">
+                    <span className="text-xs font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
                       {activeDoc.docNumber} · {activeDoc.stage}
                     </span>
                   </div>
@@ -492,7 +507,7 @@ export const Module7BillingUPI: React.FC = () => {
                         convertQuotationToInvoice(activeDoc.id);
                         setUpiNotice(`Converted ${activeDoc.docNumber} into a GST Invoice.`);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+                      className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-1.5 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
                     >
                       Convert → Invoice
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -501,7 +516,7 @@ export const Module7BillingUPI: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleExportPdf}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-300 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
+                    className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-1.5 rounded-full text-xs font-medium border border-black/15 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
                   >
                     <FileDown className="w-3.5 h-3.5" />
                     Export PDF
@@ -513,7 +528,7 @@ export const Module7BillingUPI: React.FC = () => {
                 {activeDoc.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-start justify-between gap-3 py-2 border-b border-zinc-100 dark:border-white/5"
+                    className="flex items-start justify-between gap-3 py-2 border-b border-black/5 dark:border-white/8"
                   >
                     <div>
                       <p className="text-sm font-medium text-zinc-900 dark:text-white">
@@ -531,7 +546,7 @@ export const Module7BillingUPI: React.FC = () => {
                 ))}
               </div>
 
-              <div className="rounded-xl bg-zinc-50 dark:bg-[#090B10] p-4 space-y-2 text-sm">
+              <div className="rounded-[18px] liquid-glass-subtle p-4 space-y-2 text-sm">
                 <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                   <span>Subtotal</span>
                   <span className="font-mono tabular-nums">
@@ -546,7 +561,7 @@ export const Module7BillingUPI: React.FC = () => {
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between font-semibold text-zinc-900 dark:text-white pt-1 border-t border-zinc-200 dark:border-white/10">
+                <div className="flex justify-between font-semibold text-zinc-900 dark:text-white pt-1.5 border-t border-black/10 dark:border-white/10">
                   <span>Grand Total</span>
                   <span className="font-mono tabular-nums">
                     ₹{activeTotals.grandTotal.toLocaleString('en-IN')}
@@ -558,7 +573,7 @@ export const Module7BillingUPI: React.FC = () => {
                     ₹{activeDoc.advancePaidInr.toLocaleString('en-IN')}
                   </span>
                 </div>
-                <div className="flex justify-between text-base font-bold text-[#B58E24] dark:text-[#D4AF37] pt-1 border-t border-zinc-200 dark:border-white/10">
+                <div className="flex justify-between text-base font-bold text-[#B58E24] dark:text-[#D4AF37] pt-1.5 border-t border-black/10 dark:border-white/10">
                   <span>Balance Due</span>
                   <span className="font-mono tabular-nums">
                     ₹{activeTotals.balanceDue.toLocaleString('en-IN')}
@@ -568,8 +583,8 @@ export const Module7BillingUPI: React.FC = () => {
             </div>
 
             {/* Scannable UPI Payment QR Panel */}
-            <div className="lg:col-span-5 rounded-2xl border border-[#D4AF37]/30 bg-white dark:bg-[#11141D] p-5 flex flex-col items-center text-center space-y-4">
-              <div className="w-full flex items-center justify-between text-xs font-mono text-zinc-500">
+            <div className="lg:col-span-5 rounded-[24px] liquid-glass border-[#D4AF37]/35 p-5 sm:p-6 flex flex-col items-center text-center space-y-4">
+              <div className="w-full flex items-center justify-between text-xs font-mono text-zinc-500 dark:text-zinc-400">
                 <span className="inline-flex items-center gap-1.5 text-[#B58E24] dark:text-[#D4AF37]">
                   <QrCode className="w-3.5 h-3.5" />
                   BHIM / GPay / PhonePe
@@ -596,10 +611,10 @@ export const Module7BillingUPI: React.FC = () => {
                 </p>
               </div>
 
-              <div className="w-full space-y-2">
+              <div className="w-full space-y-2.5">
                 <a
                   href={upiUri}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition"
+                  className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition"
                 >
                   <Smartphone className="w-3.5 h-3.5" />
                   Pay via UPI App Link
@@ -608,7 +623,7 @@ export const Module7BillingUPI: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCopyUpi}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border border-zinc-300 dark:border-white/15 text-zinc-700 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-full text-xs font-medium border border-black/15 dark:border-white/15 text-zinc-700 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   Copy UPI Payment Link
@@ -623,15 +638,15 @@ export const Module7BillingUPI: React.FC = () => {
                         `${activeDoc.docNumber} marked Paid & synced to Module 6 Net Profit Ledger.`
                       );
                     }}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition cursor-pointer"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Mark Paid & Sync Ledger
+                    Mark Paid &amp; Sync Ledger
                   </button>
                 ) : (
-                  <div className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+                  <div className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-xs font-semibold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
                     <FileText className="w-3.5 h-3.5" />
-                    Settled & Synced to Profit Ledger
+                    Settled &amp; Synced to Profit Ledger
                   </div>
                 )}
               </div>

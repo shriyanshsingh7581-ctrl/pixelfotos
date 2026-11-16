@@ -129,24 +129,24 @@ export const Module3AlbumRetouch: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37] tracking-wide">
+          <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
             Module 03 · Pixel Specular Glare &amp; Skin Texture Preservation
           </p>
-          <h2 className="text-2xl sm:text-3xl font-editorial font-semibold tracking-tight mt-0.5">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-0.5">
             One-Click Album AI Retouch
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
             Applies real pixel highlight roll-off and natural tonal portrait cleanup across every selected album spread in your workspace.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 self-start">
+        <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto">
           <button
             type="button"
             onClick={handleDownloadRetouchedPreview}
-            className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-zinc-300 dark:border-white/15 bg-white dark:bg-[#11141D] hover:border-[#D4AF37] inline-flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold liquid-glass-subtle hover:border-[#D4AF37] inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="w-4 h-4 text-[#D4AF37]" />
             <span>Export Preview</span>
@@ -155,20 +155,20 @@ export const Module3AlbumRetouch: React.FC = () => {
             type="button"
             disabled={processing}
             onClick={handleApplyToFullAlbum}
-            className="px-5 py-2.5 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] transition-colors inline-flex items-center gap-2 whitespace-nowrap cursor-pointer disabled:opacity-60"
+            className="min-h-[44px] px-5 py-2.5 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] transition inline-flex items-center gap-2 whitespace-nowrap cursor-pointer disabled:opacity-60"
           >
             <Sparkles className="w-4 h-4" />
             <span>
               {processing
                 ? `Processing Canvas (${processedCount}/${totalTarget})...`
-                : `Apply 1-Click Retouch to Full Album (${albumPhotos.length} Spreads)`}
+                : `Apply to Album (${albumPhotos.length} Spreads)`}
             </span>
           </button>
         </div>
       </div>
 
       {albumRetouch.appliedToAlbum && !processing && (
-        <div className="rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 px-4 py-3 text-xs font-mono text-[#10B981] flex items-center gap-2">
+        <div className="rounded-[18px] bg-[#10B981]/12 border border-[#10B981]/30 px-4 py-3 text-xs font-mono text-[#10B981] flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>
             Rendered natural-texture retouch pass across {albumRetouch.lastProcessedCount} album spreads and saved to IndexedDB.
@@ -176,12 +176,12 @@ export const Module3AlbumRetouch: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 p-5 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+        <div className="md:col-span-7 liquid-glass rounded-[24px] p-5 space-y-4">
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold">Live Editorial Portrait Retouch Preview</span>
             <span className="font-mono text-zinc-500 dark:text-zinc-400">
-              Texture Guard: 100% Active
+              Texture Guard: Active
             </span>
           </div>
 
@@ -190,7 +190,7 @@ export const Module3AlbumRetouch: React.FC = () => {
               <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
                 Original Portrait
               </div>
-              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900">
+              <div className="aspect-[3/4] rounded-[18px] overflow-hidden bg-zinc-900">
                 <img
                   src={selectedPortraitUrl}
                   alt="Original Portrait"
@@ -204,7 +204,7 @@ export const Module3AlbumRetouch: React.FC = () => {
               <div className="text-[11px] font-mono text-[#B58E24] dark:text-[#D4AF37]">
                 Natural Retouch Output
               </div>
-              <div className="aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 relative">
+              <div className="aspect-[3/4] rounded-[18px] overflow-hidden bg-zinc-900 relative">
                 <img
                   src={selectedPortraitUrl}
                   alt="AI Retouched Portrait"
@@ -227,10 +227,10 @@ export const Module3AlbumRetouch: React.FC = () => {
                 key={item.label}
                 type="button"
                 onClick={() => setSelectedPortraitUrl(item.url)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border whitespace-nowrap cursor-pointer ${
+                className={`min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap cursor-pointer ${
                   selectedPortraitUrl === item.url
                     ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37]'
-                    : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400'
+                    : 'border-black/10 dark:border-white/12 text-zinc-600 dark:text-zinc-400'
                 }`}
               >
                 {item.label}
@@ -239,7 +239,7 @@ export const Module3AlbumRetouch: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-5 rounded-2xl bg-white dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 p-6 space-y-5">
+        <div className="md:col-span-5 liquid-glass rounded-[24px] p-5 sm:p-6 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold">Natural-Finish Retouch Controls</h3>
             <button
@@ -254,7 +254,7 @@ export const Module3AlbumRetouch: React.FC = () => {
                   lastProcessedCount: 0,
                 })
               }
-              className="text-xs text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
+              className="text-xs font-medium text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
             >
               Reset Defaults
             </button>
@@ -264,7 +264,7 @@ export const Module3AlbumRetouch: React.FC = () => {
             {
               key: 'skinBlemishCleanup' as const,
               label: 'Skin Blemish & Luminance Balance',
-              desc: 'Even skin luminance while preserving authentic skin texture',
+              desc: 'Even skin luminance while preserving authentic texture',
               val: albumRetouch.skinBlemishCleanup,
             },
             {

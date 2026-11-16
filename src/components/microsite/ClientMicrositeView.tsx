@@ -15,7 +15,6 @@ import {
   ScanFace,
   ShoppingBag,
   Sun,
-  Upload,
   X,
 } from 'lucide-react';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
@@ -28,7 +27,9 @@ import {
 } from '../../lib/faceMatchEngine';
 import { fileToDataUrl } from '../../lib/imageCullingEngine';
 import { ShootPhoto } from '../../types/pixelfotos';
+import { BottomSheetModal } from '../shared/BottomSheetModal';
 import { MediaFrame } from '../shared/MediaFrame';
+import { MobileBottomDock } from '../shared/MobileBottomDock';
 
 export const ClientMicrositeView: React.FC = () => {
   const {
@@ -66,7 +67,7 @@ export const ClientMicrositeView: React.FC = () => {
   const [matchedMap, setMatchedMap] = useState<Map<string, number>>(new Map());
   const selfieFileRef = useRef<HTMLInputElement | null>(null);
 
-  // Print Order Modal
+  // Print Order Modal / Slide-up Bottom Sheet
   const [printTargetPhoto, setPrintTargetPhoto] = useState<ShootPhoto | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>(PRINT_STORE_CATALOG[0].id);
   const [buyerName, setBuyerName] = useState<string>('Ananya Verma');
@@ -211,20 +212,20 @@ export const ClientMicrositeView: React.FC = () => {
 
   if (deliveryConfig.pinProtected && !unlocked) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#090B10] flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-md rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-8 text-center space-y-5 shadow-2xl">
+      <div className="min-h-screen liquid-canvas flex flex-col items-center justify-center p-5">
+        <div className="w-full max-w-md rounded-[28px] liquid-glass p-7 sm:p-8 text-center space-y-5">
           <div className="w-12 h-12 mx-auto rounded-full bg-[#D4AF37]/15 flex items-center justify-center text-[#D4AF37]">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-[#B58E24] dark:text-[#D4AF37]">
+            <p className="text-[11px] font-mono text-[#B58E24] dark:text-[#D4AF37]">
               {deliveryConfig.studioLogoText}
             </p>
-            <h2 className="mt-2 text-3xl font-editorial font-semibold text-zinc-900 dark:text-white">
+            <h2 className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-white tracking-tight">
               {microsite.coupleOrHostName}
             </h2>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              This private event gallery is PIN protected. (Demo PIN: {deliveryConfig.pinCode})
+            <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+              Private client portal protected by PIN. (Demo PIN: {deliveryConfig.pinCode})
             </p>
           </div>
           <form onSubmit={handlePinSubmit} className="space-y-3">
@@ -233,16 +234,14 @@ export const ClientMicrositeView: React.FC = () => {
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
               placeholder="Enter 4-digit Gallery PIN"
-              className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-white/15 bg-zinc-50 dark:bg-[#090B10] text-center font-mono tracking-[0.4em] text-lg text-zinc-900 dark:text-white"
+              className="w-full min-h-[48px] px-4 py-3 rounded-2xl liquid-input text-center font-mono tracking-[0.4em] text-lg"
             />
             {pinError && (
-              <p className="text-xs text-rose-500">
-                Incorrect PIN. Try {deliveryConfig.pinCode}.
-              </p>
+              <p className="text-xs text-rose-500">Incorrect PIN. Try {deliveryConfig.pinCode}.</p>
             )}
             <button
               type="submit"
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+              className="w-full min-h-[48px] py-3 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
             >
               Unlock Client Gallery
             </button>
@@ -260,20 +259,21 @@ export const ClientMicrositeView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#090B10] text-zinc-900 dark:text-white">
-      <div className="sticky top-0 z-40 border-b border-zinc-200 dark:border-white/10 bg-white/90 dark:bg-[#090B10]/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+    <div className="min-h-screen liquid-canvas text-zinc-900 dark:text-[#F5F5F7] pb-[120px] md:pb-10">
+      {/* Floating Translucent Top Portal Bar */}
+      <div className="sticky top-0 z-40 px-3 sm:px-6 pt-2.5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 rounded-[20px] liquid-glass-dock flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setViewMode('studio')}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-[#B58E24] dark:hover:text-[#D4AF37] cursor-pointer whitespace-nowrap"
+            className="min-h-[40px] inline-flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-[#B58E24] dark:hover:text-[#D4AF37] cursor-pointer whitespace-nowrap"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Studio Command
+            <span>Back to Studio</span>
           </button>
 
-          <span className="hidden sm:inline-block text-xs font-mono text-zinc-500 dark:text-zinc-400">
-            pixelfotos.online/{microsite.slug} · Branded by {deliveryConfig.studioName}
+          <span className="hidden sm:inline-block text-xs font-mono text-zinc-500 dark:text-zinc-400 truncate">
+            pixelfotos.online/{microsite.slug} · {deliveryConfig.studioName}
           </span>
 
           <div className="flex items-center gap-2">
@@ -281,61 +281,65 @@ export const ClientMicrositeView: React.FC = () => {
               type="button"
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className="p-2 rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
+              className="min-w-[40px] min-h-[40px] rounded-full liquid-glass-subtle flex items-center justify-center text-zinc-600 dark:text-zinc-300 cursor-pointer"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-[#D4AF37]" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
               type="button"
               onClick={() => setViewMode('landing')}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer whitespace-nowrap"
+              className="min-h-[40px] px-3.5 rounded-full text-xs font-medium liquid-glass-subtle text-zinc-700 dark:text-zinc-200 cursor-pointer whitespace-nowrap"
             >
-              Public Showcase
+              Showcase
             </button>
           </div>
         </div>
       </div>
 
-      {/* Editorial Hero */}
-      <section className="relative h-[66vh] min-h-[440px] flex items-end overflow-hidden">
-        <img
-          src={microsite.heroImageUrl}
-          alt={microsite.coupleOrHostName}
-          referrerPolicy="no-referrer"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#090B10] via-[#090B10]/45 to-black/25" />
+      {/* Editorial Hero Container */}
+      <section className="max-w-7xl mx-auto px-3.5 sm:px-6 pt-5">
+        <div className="relative h-[54vh] sm:h-[62vh] min-h-[360px] rounded-[28px] overflow-hidden liquid-glass p-1.5">
+          <div className="relative w-full h-full rounded-[22px] overflow-hidden flex items-end">
+            <img
+              src={microsite.heroImageUrl}
+              alt={microsite.coupleOrHostName}
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
 
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-6 pb-12 text-white">
-          <p
-            className="text-xs font-mono uppercase tracking-[0.28em]"
-            style={{ color: deliveryConfig.accentColor }}
-          >
-            {deliveryConfig.studioLogoText} · {microsite.eventType} Celebration
-          </p>
-          <h1 className="mt-2 text-5xl sm:text-7xl font-editorial font-semibold tracking-tight">
-            {microsite.coupleOrHostName}
-          </h1>
-          <p className="mt-3 text-sm sm:text-base text-zinc-200 max-w-2xl">
-            {microsite.storyText}
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-300">
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
-              {microsite.eventDate}
-            </span>
-            <span>·</span>
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-              {microsite.venueName}, {microsite.venueCity}
-            </span>
+            <div className="relative z-10 w-full p-5 sm:p-10 text-white">
+              <p
+                className="text-xs font-mono tracking-wider"
+                style={{ color: deliveryConfig.accentColor }}
+              >
+                {deliveryConfig.studioLogoText} · {microsite.eventType} Celebration
+              </p>
+              <h1 className="mt-2 text-4xl sm:text-6xl font-semibold tracking-tight">
+                {microsite.coupleOrHostName}
+              </h1>
+              <p className="mt-2.5 text-sm sm:text-base text-zinc-200 max-w-2xl">
+                {microsite.storyText}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-mono text-zinc-300">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  {microsite.eventDate}
+                </span>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  {microsite.venueName}, {microsite.venueCity}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-14">
+      <main className="max-w-7xl mx-auto px-3.5 sm:px-6 py-8 sm:py-12 space-y-12">
         {orderNotice && (
-          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[#10B981]/35 bg-[#10B981]/10 text-sm text-emerald-800 dark:text-emerald-200">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border border-[#10B981]/35 bg-[#10B981]/12 text-sm text-emerald-800 dark:text-emerald-200">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-[#10B981]" />
               <span>{orderNotice}</span>
@@ -350,25 +354,25 @@ export const ClientMicrositeView: React.FC = () => {
           </div>
         )}
 
-        {/* Schedule + Google Maps + Live Stream */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-6 space-y-4">
-            <p className="text-xs font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
+        {/* Schedule + Google Maps + Live Stream Bento */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-5 liquid-glass rounded-[24px] p-5 sm:p-6 space-y-4">
+            <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
               Celebration Itinerary
             </p>
-            <h2 className="text-3xl font-editorial font-semibold">Event Schedule</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Event Schedule</h2>
             <div className="space-y-3">
               {microsite.schedule.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10]"
+                  className="p-3.5 rounded-[18px] liquid-glass-subtle space-y-1"
                 >
                   <div className="flex items-center justify-between text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
                     <span>{item.dateLabel}</span>
                     <span>{item.timeLabel}</span>
                   </div>
-                  <p className="mt-1 font-semibold text-zinc-900 dark:text-white">{item.title}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <p className="font-semibold text-zinc-900 dark:text-white">{item.title}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {item.venueHall} · Dress: {item.dressCode}
                   </p>
                 </div>
@@ -376,11 +380,11 @@ export const ClientMicrositeView: React.FC = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-7 space-y-6">
-            <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-3">
+          <div className="lg:col-span-7 space-y-5">
+            <div className="liquid-glass rounded-[24px] p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-[0.18em] text-[#B58E24] dark:text-[#D4AF37]">
+                  <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
                     Venue Directions
                   </p>
                   <h3 className="text-lg font-semibold">{microsite.venueName}</h3>
@@ -393,7 +397,7 @@ export const ClientMicrositeView: React.FC = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:underline"
                 >
-                  Open Google Maps
+                  Open Maps
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -402,20 +406,20 @@ export const ClientMicrositeView: React.FC = () => {
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(
                   microsite.googleMapsQuery
                 )}&output=embed`}
-                className="w-full h-52 rounded-xl border border-zinc-200 dark:border-white/10"
+                className="w-full h-52 rounded-[18px] border border-black/10 dark:border-white/10"
                 loading="lazy"
               />
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-3">
+            <div className="liquid-glass rounded-[24px] p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Radio className="w-4 h-4 text-[#10B981]" />
-                  <h3 className="text-base font-semibold">Live Ceremony Stream (YouTube / RTMP)</h3>
+                  <h3 className="text-base font-semibold">Live Ceremony Stream</h3>
                 </div>
                 <span className="text-xs font-mono text-[#10B981]">1080p Live</span>
               </div>
-              <div className="aspect-video rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-black">
+              <div className="aspect-video rounded-[18px] overflow-hidden border border-black/10 dark:border-white/10 bg-black">
                 <iframe
                   title="Live Wedding Ceremony Broadcast"
                   src={microsite.youtubeStreamUrl}
@@ -429,40 +433,43 @@ export const ClientMicrositeView: React.FC = () => {
         </section>
 
         {/* Integrated Guest Gallery + Real face-api.js Match + Print Store */}
-        <section className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-zinc-200 dark:border-white/10 pb-5">
+        <section className="space-y-5">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-black/8 dark:border-white/10 pb-4">
             <div>
-              <p className="text-xs font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
+              <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
                 Live Client Gallery &amp; Print Store
               </p>
-              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold">
+              <h2 className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">
                 Moments Captured Live
               </h2>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
-                onClick={() => setShowFaceCheckin((v) => !v)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+                onClick={() => setShowFaceCheckin(true)}
+                className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
               >
                 <ScanFace className="w-4 h-4" />
                 Find My Photos (AI Face Match)
               </button>
 
-              <div className="inline-flex p-1 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-[#11141D]">
+              <div className="inline-flex p-1 rounded-[16px] liquid-glass-subtle">
                 {[
                   { id: 'all' as const, label: 'All Photos' },
-                  { id: 'only_you' as const, label: `Only You (${matchedMap.size > 0 ? matchedMap.size : 'AI'})` },
+                  {
+                    id: 'only_you' as const,
+                    label: `Only You (${matchedMap.size > 0 ? matchedMap.size : 'AI'})`,
+                  },
                   { id: 'unknown' as const, label: 'Unknown Faces' },
                 ].map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setGalleryTab(t.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                       galleryTab === t.id
-                        ? 'bg-white dark:bg-[#090B10] text-zinc-900 dark:text-white shadow-xs'
+                        ? 'bg-white dark:bg-[#1E2028] text-zinc-900 dark:text-white shadow-xs'
                         : 'text-zinc-600 dark:text-zinc-400'
                     }`}
                   >
@@ -474,66 +481,9 @@ export const ClientMicrositeView: React.FC = () => {
           </div>
 
           {faceMatchStatus && (
-            <div className="px-4 py-2.5 rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+            <div className="px-4 py-2.5 rounded-[16px] border border-[#D4AF37]/30 bg-[#D4AF37]/10 text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
               {faceMatchStatus}
             </div>
-          )}
-
-          {showFaceCheckin && (
-            <form
-              onSubmit={handleQuickFaceMatch}
-              className="rounded-2xl border border-[#D4AF37]/40 bg-white dark:bg-[#11141D] p-5 grid grid-cols-1 md:grid-cols-5 gap-3 items-center"
-            >
-              <input
-                type="text"
-                placeholder="Your Full Name *"
-                value={quickGuestName}
-                onChange={(e) => setQuickGuestName(e.target.value)}
-                required
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm"
-              />
-              <input
-                type="text"
-                placeholder="WhatsApp for updates"
-                value={quickGuestWhatsapp}
-                onChange={(e) => setQuickGuestWhatsapp(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono"
-              />
-              <input
-                ref={selfieFileRef}
-                type="file"
-                accept="image/*"
-                capture="user"
-                onChange={handleQuickSelfieFile}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => selfieFileRef.current?.click()}
-                className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/15 text-xs font-semibold cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-[#D4AF37]" />
-                {selfiePreview ? 'Selfie Ready ✓' : 'Upload / Capture Selfie'}
-              </button>
-              <select
-                value={selectedGuestId}
-                onChange={(e) => setSelectedGuestId(e.target.value)}
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm"
-              >
-                {registeredGuests.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    Profile: {g.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="submit"
-                disabled={matchingFaces}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#10B981] text-[#090B10] cursor-pointer disabled:opacity-60"
-              >
-                {matchingFaces ? 'Scanning 128-d...' : 'Match My Photos'}
-              </button>
-            </form>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -542,7 +492,7 @@ export const ClientMicrositeView: React.FC = () => {
               return (
                 <div
                   key={photo.id}
-                  className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] overflow-hidden flex flex-col"
+                  className="liquid-glass rounded-[24px] overflow-hidden flex flex-col"
                 >
                   <MediaFrame
                     src={photo.url}
@@ -555,7 +505,7 @@ export const ClientMicrositeView: React.FC = () => {
                   <div className="p-4 flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold truncate">{photo.fileName}</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                         {conf ? `${conf}% Face Match` : photo.eventSection} · {photo.capturedAt}
                       </p>
                     </div>
@@ -565,10 +515,10 @@ export const ClientMicrositeView: React.FC = () => {
                         type="button"
                         onClick={() => toggleGuestLike(photo.id)}
                         aria-label={`Heart ${photo.fileName}`}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                        className={`min-h-[40px] inline-flex items-center gap-1 px-2.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
                           photo.guestLiked
                             ? 'border-rose-500/40 bg-rose-500/15 text-rose-500'
-                            : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300'
+                            : 'border-black/10 dark:border-white/12 text-zinc-600 dark:text-zinc-300'
                         }`}
                       >
                         <Heart className={`w-3.5 h-3.5 ${photo.guestLiked ? 'fill-current' : ''}`} />
@@ -580,7 +530,7 @@ export const ClientMicrositeView: React.FC = () => {
                           type="button"
                           onClick={() => triggerDirectDownload(photo.url, photo.fileName)}
                           aria-label={`Download ${photo.fileName}`}
-                          className="p-2 rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
+                          className="min-w-[40px] min-h-[40px] rounded-full liquid-glass-subtle flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37] cursor-pointer"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
@@ -589,10 +539,10 @@ export const ClientMicrositeView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setPrintTargetPhoto(photo)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+                        className="min-h-[40px] inline-flex items-center gap-1 px-3 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
                       >
                         <Frame className="w-3.5 h-3.5" />
-                        Order Print
+                        Print
                       </button>
                     </div>
                   </div>
@@ -603,89 +553,154 @@ export const ClientMicrositeView: React.FC = () => {
         </section>
       </main>
 
-      {printTargetPhoto && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-zinc-200 dark:border-white/15 bg-white dark:bg-[#11141D] p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
-              <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#D4AF37]">
-                  {deliveryConfig.studioName} Print Lab
-                </p>
-                <h3 className="text-xl font-editorial font-semibold">
-                  Order Print or Heirloom Frame
-                </h3>
-              </div>
+      {/* Slide-Up Bottom Sheet for Guest Selfie AI Check-In */}
+      <BottomSheetModal
+        open={showFaceCheckin}
+        onClose={() => setShowFaceCheckin(false)}
+        title="Find My Photos (AI Face Match)"
+        subtitle="face-api.js 128-d Biometric Check-In"
+        footer={
+          <button
+            type="submit"
+            form="guest-face-checkin-form"
+            disabled={matchingFaces}
+            className="w-full min-h-[48px] rounded-full text-sm font-semibold bg-[#10B981] text-[#090B10] cursor-pointer disabled:opacity-60"
+          >
+            {matchingFaces ? 'Scanning 128-d Vectors...' : 'Apply & Match My Photos'}
+          </button>
+        }
+      >
+        <form id="guest-face-checkin-form" onSubmit={handleQuickFaceMatch} className="space-y-3.5">
+          <div>
+            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              Your Full Name *
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Meera Kapoor"
+              value={quickGuestName}
+              onChange={(e) => setQuickGuestName(e.target.value)}
+              required
+              className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              WhatsApp for Instant Alerts
+            </label>
+            <input
+              type="text"
+              placeholder="+91 98200 12345"
+              value={quickGuestWhatsapp}
+              onChange={(e) => setQuickGuestWhatsapp(e.target.value)}
+              className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm font-mono"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <input
+                ref={selfieFileRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                onChange={handleQuickSelfieFile}
+                className="hidden"
+              />
               <button
                 type="button"
-                onClick={() => setPrintTargetPhoto(null)}
-                aria-label="Close print modal"
-                className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/10 cursor-pointer"
+                onClick={() => selfieFileRef.current?.click()}
+                className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-2xl liquid-glass-subtle text-xs font-semibold cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <Camera className="w-4 h-4 text-[#D4AF37]" />
+                {selfiePreview ? 'Selfie Ready ✓' : 'Capture / Upload Selfie'}
               </button>
             </div>
-
-            <form onSubmit={handleSubmitPrintOrder} className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-[#090B10]">
-                <MediaFrame
-                  src={printTargetPhoto.url}
-                  alt={printTargetPhoto.fileName}
-                  className="w-16 h-16 rounded-lg shrink-0"
-                />
-                <div>
-                  <p className="text-sm font-semibold">{printTargetPhoto.fileName}</p>
-                  <p className="text-xs text-zinc-500">
-                    Museum Archival Print Ready · {printTargetPhoto.rawFileName}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {PRINT_STORE_CATALOG.map((product) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => setSelectedProductId(product.id)}
-                    className={`w-full text-left p-3 rounded-xl border flex items-center justify-between cursor-pointer ${
-                      selectedProductId === product.id
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                        : 'border-zinc-200 dark:border-white/10'
-                    }`}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold">{product.name}</p>
-                      <p className="text-xs text-zinc-500">
-                        {product.category} · {product.dimensions}
-                      </p>
-                    </div>
-                    <span className="text-sm font-mono font-semibold tabular-nums">
-                      ₹{product.clientPriceInr.toLocaleString('en-IN')}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <input
-                type="text"
-                placeholder="Your Full Name *"
-                value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm"
-              />
-
-              <button
-                type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                Confirm Print Order · ₹
-                {activePrintProduct.clientPriceInr.toLocaleString('en-IN')}
-              </button>
-            </form>
+            <select
+              value={selectedGuestId}
+              onChange={(e) => setSelectedGuestId(e.target.value)}
+              className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
+            >
+              {registeredGuests.map((g) => (
+                <option key={g.id} value={g.id}>
+                  Profile: {g.name}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
+        </form>
+      </BottomSheetModal>
+
+      {/* Slide-Up Bottom Sheet for Print Order */}
+      <BottomSheetModal
+        open={Boolean(printTargetPhoto)}
+        onClose={() => setPrintTargetPhoto(null)}
+        title="Order Print or Heirloom Frame"
+        subtitle={`${deliveryConfig.studioName} Print Lab`}
+        footer={
+          <button
+            type="submit"
+            form="client-print-order-form"
+            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Save &amp; Order Print · ₹{activePrintProduct.clientPriceInr.toLocaleString('en-IN')}
+          </button>
+        }
+      >
+        {printTargetPhoto && (
+          <form id="client-print-order-form" onSubmit={handleSubmitPrintOrder} className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-[18px] liquid-glass-subtle">
+              <MediaFrame
+                src={printTargetPhoto.url}
+                alt={printTargetPhoto.fileName}
+                className="w-16 h-16 rounded-xl shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{printTargetPhoto.fileName}</p>
+                <p className="text-xs text-zinc-500 truncate">
+                  Museum Archival Print · {printTargetPhoto.rawFileName}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {PRINT_STORE_CATALOG.map((product) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => setSelectedProductId(product.id)}
+                  className={`w-full min-h-[52px] text-left p-3.5 rounded-[18px] border flex items-center justify-between cursor-pointer ${
+                    selectedProductId === product.id
+                      ? 'border-[#D4AF37] bg-[#D4AF37]/12'
+                      : 'border-black/10 dark:border-white/12'
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold">{product.name}</p>
+                    <p className="text-xs text-zinc-500">
+                      {product.category} · {product.dimensions}
+                    </p>
+                  </div>
+                  <span className="text-sm font-mono font-semibold tabular-nums">
+                    ₹{product.clientPriceInr.toLocaleString('en-IN')}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="text"
+              placeholder="Your Full Name *"
+              value={buyerName}
+              onChange={(e) => setBuyerName(e.target.value)}
+              required
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl liquid-input text-sm"
+            />
+          </form>
+        )}
+      </BottomSheetModal>
+
+      <MobileBottomDock />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
 import { CRMClient, LeadStatus, StudioExpense, TeamAssignment } from '../../types/pixelfotos';
+import { BottomSheetModal } from '../shared/BottomSheetModal';
 
 type CRMTab = 'clients' | 'team' | 'expenses';
 
@@ -165,13 +166,13 @@ export const Module6CRMExpenses: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-zinc-200 dark:border-white/10 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-5">
         <div>
           <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
-            Module 06 · Studio Operations & P&L
+            Module 06 · Studio Operations &amp; P&amp;L
           </p>
-          <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
-            Studio CRM, Team & Expense Management
+          <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
+            Studio CRM, Team &amp; Expense Management
           </h2>
           <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
             Track client leads, communication history, crew shoot assignments, and per-event expenses with real-time Net Profit calculation synced to invoices and print sales.
@@ -179,7 +180,7 @@ export const Module6CRMExpenses: React.FC = () => {
         </div>
 
         {/* Sub-Navigation */}
-        <div className="inline-flex p-1 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-[#090B10] self-start">
+        <div className="inline-flex flex-wrap p-1.5 rounded-full liquid-glass-subtle self-start">
           {[
             { id: 'clients' as CRMTab, label: 'Client CRM', icon: Users },
             { id: 'team' as CRMTab, label: 'Team & Tasks', icon: UserCheck },
@@ -192,13 +193,13 @@ export const Module6CRMExpenses: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shrink-0 cursor-pointer ${
                   active
-                    ? 'bg-white dark:bg-[#11141D] text-zinc-900 dark:text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <Icon className={`w-3.5 h-3.5 ${active ? 'text-[#D4AF37]' : 'text-[#D4AF37]'}`} />
                 {item.label}
               </button>
             );
@@ -207,9 +208,9 @@ export const Module6CRMExpenses: React.FC = () => {
       </div>
 
       {/* Live Studio Profit & Pipeline Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4">
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <div className="rounded-[22px] liquid-glass p-4 sm:p-5">
+          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             CRM Pipeline Value
           </p>
           <p className="mt-2 text-2xl font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
@@ -220,8 +221,8 @@ export const Module6CRMExpenses: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4">
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500">
+        <div className="rounded-[22px] liquid-glass p-4 sm:p-5">
+          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             Collected + Print Profit
           </p>
           <p className="mt-2 text-2xl font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
@@ -233,8 +234,8 @@ export const Module6CRMExpenses: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4">
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500">
+        <div className="rounded-[22px] liquid-glass p-4 sm:p-5">
+          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             Total Event Expenses
           </p>
           <p className="mt-2 text-2xl font-mono font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
@@ -245,7 +246,7 @@ export const Module6CRMExpenses: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-[#10B981]/35 bg-white dark:bg-[#11141D] p-4">
+        <div className="rounded-[22px] liquid-glass border-[#10B981]/40 p-4 sm:p-5">
           <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#10B981]">
             Net Studio Profit
           </p>
@@ -257,7 +258,7 @@ export const Module6CRMExpenses: React.FC = () => {
             {netProfitInr >= 0 ? '+' : ''}₹{netProfitInr.toLocaleString('en-IN')}
           </p>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Updates live with Module 5 & 7
+            Updates live with Module 5 &amp; 7
           </p>
         </div>
       </div>
@@ -272,10 +273,10 @@ export const Module6CRMExpenses: React.FC = () => {
                   key={status}
                   type="button"
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                  className={`min-h-[40px] px-4 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ${
                     statusFilter === status
                       ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-zinc-900 dark:text-white'
-                      : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400'
+                      : 'border-black/10 dark:border-white/12 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]/40'
                   }`}
                 >
                   {status}
@@ -285,88 +286,125 @@ export const Module6CRMExpenses: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setShowAddClient((s) => !s)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer"
+              onClick={() => setShowAddClient(true)}
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              {showAddClient ? 'Close Form' : 'Add Client Lead'}
+              <Plus className="w-4 h-4" />
+              Add Client Lead
             </button>
           </div>
 
-          {showAddClient && (
+          <BottomSheetModal
+            open={showAddClient}
+            onClose={() => setShowAddClient(false)}
+            title="Add Studio Client Lead"
+            subtitle="Module 06 · Client CRM"
+            footer={
+              <button
+                type="submit"
+                form="crm-new-client-form"
+                className="w-full min-h-[48px] rounded-full text-sm font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition cursor-pointer"
+              >
+                Save Client Lead
+              </button>
+            }
+          >
             <form
+              id="crm-new-client-form"
               onSubmit={handleCreateClient}
-              className="rounded-2xl border border-[#D4AF37]/40 bg-white dark:bg-[#11141D] p-5 grid grid-cols-1 md:grid-cols-3 gap-4"
+              className="grid grid-cols-1 md:grid-cols-2 gap-3.5"
             >
-              <input
-                type="text"
-                placeholder="Couple / Client Name *"
-                value={clientForm.name}
-                onChange={(e) => setClientForm((p) => ({ ...p, name: e.target.value }))}
-                required
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="WhatsApp / Phone"
-                value={clientForm.phone}
-                onChange={(e) => setClientForm((p) => ({ ...p, phone: e.target.value }))}
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
-              />
-              <input
-                type="email"
-                placeholder="Client Email"
-                value={clientForm.email}
-                onChange={(e) => setClientForm((p) => ({ ...p, email: e.target.value }))}
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
-              />
-              <input
-                type="text"
-                placeholder="Package Name"
-                value={clientForm.packageName}
-                onChange={(e) => setClientForm((p) => ({ ...p, packageName: e.target.value }))}
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
-              />
-              <input
-                type="number"
-                placeholder="Package Value (INR)"
-                value={clientForm.packageValueInr}
-                onChange={(e) =>
-                  setClientForm((p) => ({ ...p, packageValueInr: Number(e.target.value) }))
-                }
-                className="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono text-zinc-900 dark:text-white"
-              />
-              <div className="flex items-center gap-2">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  Couple / Client Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Couple / Client Name *"
+                  value={clientForm.name}
+                  onChange={(e) => setClientForm((p) => ({ ...p, name: e.target.value }))}
+                  required
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  WhatsApp / Phone
+                </label>
+                <input
+                  type="text"
+                  placeholder="+91 98200 00000"
+                  value={clientForm.phone}
+                  onChange={(e) => setClientForm((p) => ({ ...p, phone: e.target.value }))}
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  Client Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="client@example.com"
+                  value={clientForm.email}
+                  onChange={(e) => setClientForm((p) => ({ ...p, email: e.target.value }))}
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  Package Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Package Name"
+                  value={clientForm.packageName}
+                  onChange={(e) => setClientForm((p) => ({ ...p, packageName: e.target.value }))}
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  Package Value (INR)
+                </label>
+                <input
+                  type="number"
+                  placeholder="185000"
+                  value={clientForm.packageValueInr}
+                  onChange={(e) =>
+                    setClientForm((p) => ({ ...p, packageValueInr: Number(e.target.value) }))
+                  }
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm font-mono text-zinc-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+                  Event Date
+                </label>
                 <input
                   type="date"
                   value={clientForm.eventDate}
                   onChange={(e) => setClientForm((p) => ({ ...p, eventDate: e.target.value }))}
-                  className="flex-1 px-3 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                 />
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#10B981] text-[#090B10] cursor-pointer"
-                >
-                  Save
-                </button>
               </div>
             </form>
-          )}
+          </BottomSheetModal>
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
             {/* Client Table */}
-            <div className="xl:col-span-7 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] overflow-hidden">
-              <div className="divide-y divide-zinc-200 dark:divide-white/10">
+            <div className="xl:col-span-7 rounded-[24px] liquid-glass overflow-hidden">
+              <div className="divide-y divide-black/10 dark:divide-white/10">
                 {filteredClients.map((client) => {
                   const selected = activeClient?.id === client.id;
                   return (
                     <div
                       key={client.id}
                       onClick={() => setSelectedClientId(client.id)}
-                      className={`p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer transition ${
+                      className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer transition ${
                         selected
-                          ? 'bg-[#D4AF37]/8'
-                          : 'hover:bg-zinc-50 dark:hover:bg-white/[0.02]'
+                          ? 'bg-[#D4AF37]/10'
+                          : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
                       }`}
                     >
                       <div>
@@ -376,7 +414,7 @@ export const Module6CRMExpenses: React.FC = () => {
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                           {client.packageName} · Event {client.eventDate}
                         </p>
-                        <p className="text-xs font-mono text-zinc-500 mt-0.5">
+                        <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400 mt-0.5">
                           {client.phone} · {client.communicationLogs.length} logs
                         </p>
                       </div>
@@ -391,7 +429,7 @@ export const Module6CRMExpenses: React.FC = () => {
                           onChange={(e) =>
                             updateClientStatus(client.id, e.target.value as LeadStatus)
                           }
-                          className="px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-white/15 bg-zinc-50 dark:bg-[#090B10] text-xs font-medium text-zinc-900 dark:text-white cursor-pointer"
+                          className="min-h-[40px] px-3 py-1.5 rounded-xl liquid-input text-xs font-medium text-zinc-900 dark:text-white cursor-pointer"
                         >
                           {LEAD_STATUSES.map((st) => (
                             <option key={st} value={st}>
@@ -407,11 +445,11 @@ export const Module6CRMExpenses: React.FC = () => {
             </div>
 
             {/* Client Communication Log Drawer */}
-            <div className="xl:col-span-5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4">
+            <div className="xl:col-span-5 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4">
               {activeClient ? (
                 <>
-                  <div className="border-b border-zinc-200 dark:border-white/10 pb-3">
-                    <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#D4AF37]">
+                  <div className="border-b border-black/10 dark:border-white/10 pb-3">
+                    <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#B58E24] dark:text-[#D4AF37]">
                       Communication Log · {activeClient.leadStatus}
                     </p>
                     <h3 className="mt-1 text-lg font-semibold text-zinc-900 dark:text-white">
@@ -428,11 +466,11 @@ export const Module6CRMExpenses: React.FC = () => {
                       placeholder="Log call, WhatsApp update, or edit note..."
                       value={newLogNote}
                       onChange={(e) => setNewLogNote(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                      className="flex-1 min-h-[44px] px-3.5 py-2 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                     />
                     <button
                       type="submit"
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer shrink-0"
+                      className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer shrink-0"
                     >
                       <MessageSquarePlus className="w-3.5 h-3.5" />
                       Log
@@ -443,9 +481,11 @@ export const Module6CRMExpenses: React.FC = () => {
                     {activeClient.communicationLogs.map((log) => (
                       <div
                         key={log.id}
-                        className="p-3 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10]"
+                        className="p-3.5 rounded-[16px] liquid-glass-subtle"
                       >
-                        <p className="text-[11px] font-mono text-zinc-500">{log.date}</p>
+                        <p className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
+                          {log.date}
+                        </p>
                         <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">{log.note}</p>
                       </div>
                     ))}
@@ -466,7 +506,7 @@ export const Module6CRMExpenses: React.FC = () => {
             {teamAssignments.map((member) => (
               <div
                 key={member.id}
-                className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4 space-y-3"
+                className="rounded-[22px] liquid-glass p-4 sm:p-5 space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
@@ -488,7 +528,7 @@ export const Module6CRMExpenses: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 rounded-full bg-zinc-200 dark:bg-white/10 overflow-hidden">
+                  <div className="flex-1 h-2 rounded-full bg-black/10 dark:bg-white/12 overflow-hidden">
                     <div
                       className="h-full bg-[#D4AF37] transition-all"
                       style={{ width: `${member.progressPercent}%` }}
@@ -511,12 +551,12 @@ export const Module6CRMExpenses: React.FC = () => {
 
           <form
             onSubmit={handleAddTeamTask}
-            className="xl:col-span-4 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-3.5 h-fit"
+            className="xl:col-span-4 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-3.5 h-fit"
           >
-            <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/10 pb-3">
+            <div className="flex items-center gap-2 border-b border-black/10 dark:border-white/10 pb-3">
               <Briefcase className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
-                Assign Crew & Deliverable
+                Assign Crew &amp; Deliverable
               </h3>
             </div>
             <input
@@ -525,14 +565,14 @@ export const Module6CRMExpenses: React.FC = () => {
               value={teamForm.memberName}
               onChange={(e) => setTeamForm((p) => ({ ...p, memberName: e.target.value }))}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <select
               value={teamForm.role}
               onChange={(e) =>
                 setTeamForm((p) => ({ ...p, role: e.target.value as TeamAssignment['role'] }))
               }
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             >
               {CREW_ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -545,7 +585,7 @@ export const Module6CRMExpenses: React.FC = () => {
               placeholder="Event Name"
               value={teamForm.assignedEvent}
               onChange={(e) => setTeamForm((p) => ({ ...p, assignedEvent: e.target.value }))}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <input
               type="text"
@@ -553,11 +593,11 @@ export const Module6CRMExpenses: React.FC = () => {
               value={teamForm.taskTitle}
               onChange={(e) => setTeamForm((p) => ({ ...p, taskTitle: e.target.value }))}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <button
               type="submit"
-              className="w-full py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer"
+              className="w-full min-h-[46px] py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer"
             >
               Assign to Shoot Roster
             </button>
@@ -570,7 +610,7 @@ export const Module6CRMExpenses: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
           <div className="xl:col-span-8 space-y-4">
             {/* Formula Card */}
-            <div className="rounded-2xl border border-[#10B981]/30 bg-white dark:bg-[#11141D] p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="rounded-[24px] liquid-glass border-[#10B981]/35 p-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 text-[#10B981]">
                   <TrendingUp className="w-4 h-4" />
@@ -585,7 +625,7 @@ export const Module6CRMExpenses: React.FC = () => {
                 </p>
               </div>
               <div className="text-left md:text-right">
-                <p className="text-xs font-mono text-zinc-500">NET STUDIO PROFIT</p>
+                <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400">NET STUDIO PROFIT</p>
                 <p className="text-3xl font-mono font-semibold text-[#10B981] tabular-nums">
                   ₹{netProfitInr.toLocaleString('en-IN')}
                 </p>
@@ -597,7 +637,7 @@ export const Module6CRMExpenses: React.FC = () => {
               {expenseBreakdown.map(([cat, total]) => (
                 <div
                   key={cat}
-                  className="rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-3"
+                  className="rounded-[18px] liquid-glass p-3.5"
                 >
                   <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
                     {cat}
@@ -610,9 +650,9 @@ export const Module6CRMExpenses: React.FC = () => {
             </div>
 
             {/* Expense List */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] divide-y divide-zinc-200 dark:divide-white/10">
+            <div className="rounded-[24px] liquid-glass divide-y divide-black/10 dark:divide-white/10 overflow-hidden">
               {expenses.map((exp) => (
-                <div key={exp.id} className="p-4 flex items-center justify-between gap-4">
+                <div key={exp.id} className="p-4 sm:p-5 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                       {exp.description}
@@ -631,9 +671,9 @@ export const Module6CRMExpenses: React.FC = () => {
 
           <form
             onSubmit={handleAddExpense}
-            className="xl:col-span-4 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-3.5 h-fit"
+            className="xl:col-span-4 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-3.5 h-fit"
           >
-            <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/10 pb-3">
+            <div className="flex items-center gap-2 border-b border-black/10 dark:border-white/10 pb-3">
               <IndianRupee className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
                 Log Per-Event Expense
@@ -644,7 +684,7 @@ export const Module6CRMExpenses: React.FC = () => {
               placeholder="Event Name"
               value={expenseForm.eventName}
               onChange={(e) => setExpenseForm((p) => ({ ...p, eventName: e.target.value }))}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <select
               value={expenseForm.category}
@@ -654,7 +694,7 @@ export const Module6CRMExpenses: React.FC = () => {
                   category: e.target.value as StudioExpense['category'],
                 }))
               }
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             >
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -668,7 +708,7 @@ export const Module6CRMExpenses: React.FC = () => {
               value={expenseForm.description}
               onChange={(e) => setExpenseForm((p) => ({ ...p, description: e.target.value }))}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
             />
             <div className="grid grid-cols-2 gap-2.5">
               <input
@@ -680,20 +720,20 @@ export const Module6CRMExpenses: React.FC = () => {
                   setExpenseForm((p) => ({ ...p, amountInr: Number(e.target.value) }))
                 }
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono text-zinc-900 dark:text-white tabular-nums"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm font-mono text-zinc-900 dark:text-white tabular-nums"
               />
               <input
                 type="date"
                 value={expenseForm.date}
                 onChange={(e) => setExpenseForm((p) => ({ ...p, date: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                className="w-full min-h-[44px] px-3 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
               />
             </div>
             <button
               type="submit"
-              className="w-full py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer"
+              className="w-full min-h-[46px] py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer"
             >
-              Record Expense & Recalculate Profit
+              Record Expense &amp; Recalculate Profit
             </button>
           </form>
         </div>

@@ -95,13 +95,13 @@ export const Module5PrintStoreDelivery: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Row */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-zinc-200 dark:border-white/10 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-5">
         <div>
           <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
-            Module 05 · Deliver & Monetize
+            Module 05 · Deliver &amp; Monetize
           </p>
-          <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
-            Branded Client Gallery & In-Built Print Store
+          <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
+            Branded Client Gallery &amp; In-Built Print Store
           </h2>
           <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
             Configure custom studio branding, PIN protection, high-res download rules, and sell museum-grade frames and heirloom albums directly inside client galleries.
@@ -112,16 +112,16 @@ export const Module5PrintStoreDelivery: React.FC = () => {
           <button
             type="button"
             onClick={() => setViewMode('microsite')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition whitespace-nowrap shrink-0 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition whitespace-nowrap shrink-0 cursor-pointer"
           >
             <ExternalLink className="w-4 h-4" />
-            Test Client Gallery & Print Store
+            Test Client Gallery &amp; Print Store
           </button>
         </div>
       </div>
 
       {notice && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 text-sm text-emerald-800 dark:text-emerald-200">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border border-[#10B981]/35 bg-[#10B981]/12 backdrop-blur-md text-sm text-emerald-900 dark:text-emerald-200">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-[#10B981] shrink-0" />
             <span>{notice}</span>
@@ -129,7 +129,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
           <button
             type="button"
             onClick={() => setNotice(null)}
-            className="text-xs font-mono uppercase tracking-wider opacity-75 hover:opacity-100 cursor-pointer"
+            className="min-h-[36px] px-2.5 text-xs font-mono uppercase tracking-wider opacity-75 hover:opacity-100 cursor-pointer"
           >
             Dismiss
           </button>
@@ -137,8 +137,8 @@ export const Module5PrintStoreDelivery: React.FC = () => {
       )}
 
       {/* KPI Metrics Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <div className="rounded-[22px] liquid-glass p-4 sm:p-5">
           <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             Print Store Gross
           </p>
@@ -146,11 +146,11 @@ export const Module5PrintStoreDelivery: React.FC = () => {
             ₹{storeMetrics.grossSales.toLocaleString('en-IN')}
           </p>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            {storeMetrics.totalUnits} framed & album units
+            {storeMetrics.totalUnits} framed &amp; album units
           </p>
         </div>
 
-        <div className="rounded-2xl border border-[#D4AF37]/30 bg-white dark:bg-[#11141D] p-4">
+        <div className="rounded-[22px] liquid-glass border-[#D4AF37]/40 p-4 sm:p-5">
           <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[#B58E24] dark:text-[#D4AF37]">
             Studio Net Print Profit
           </p>
@@ -162,7 +162,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4">
+        <div className="rounded-[22px] liquid-glass p-4 sm:p-5">
           <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             Gallery Security
           </p>
@@ -174,7 +174,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-4">
+        <div className="rounded-[22px] liquid-glass p-4 sm:p-5">
           <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
             High-Res Downloads
           </p>
@@ -190,15 +190,15 @@ export const Module5PrintStoreDelivery: React.FC = () => {
       {/* Main Split: Branding & Security Controls + Interactive Print Product Builder */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Left: Studio Branding & Delivery Permissions */}
-        <div className="xl:col-span-5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-5">
-          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
+        <div className="xl:col-span-5 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-5">
+          <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <Palette className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
-                Studio Branding & Delivery Gate
+                Studio Branding &amp; Delivery Gate
               </h3>
             </div>
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Live Sync
             </span>
           </div>
@@ -214,7 +214,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                 onChange={(e) =>
                   setDeliveryConfig((prev) => ({ ...prev, studioName: e.target.value }))
                 }
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#D4AF37]"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#D4AF37]"
               />
             </div>
 
@@ -231,7 +231,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                     studioLogoText: e.target.value.toUpperCase(),
                   }))
                 }
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono tracking-widest text-zinc-900 dark:text-white focus:outline-none focus:border-[#D4AF37]"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm font-mono tracking-widest text-zinc-900 dark:text-white focus:outline-none focus:border-[#D4AF37]"
               />
             </div>
 
@@ -239,7 +239,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Client Gallery Accent Palette
               </label>
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
                 {ACCENT_SWATCHES.map((swatch) => {
                   const active =
                     deliveryConfig.accentColor.toLowerCase() === swatch.hex.toLowerCase();
@@ -250,10 +250,10 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                       onClick={() =>
                         setDeliveryConfig((prev) => ({ ...prev, accentColor: swatch.hex }))
                       }
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer ${
+                      className={`inline-flex items-center gap-2 min-h-[40px] px-3.5 py-1.5 rounded-full border text-xs font-medium transition cursor-pointer ${
                         active
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-zinc-900 dark:text-white'
-                          : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:border-zinc-400'
+                          ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-zinc-900 dark:text-white'
+                          : 'border-black/10 dark:border-white/12 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]/50'
                       }`}
                     >
                       <span
@@ -271,13 +271,13 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                     setDeliveryConfig((prev) => ({ ...prev, accentColor: e.target.value }))
                   }
                   aria-label="Custom studio accent hex"
-                  className="w-8 h-8 rounded-lg border border-zinc-300 dark:border-white/10 bg-transparent cursor-pointer"
+                  className="w-10 h-10 rounded-full border border-black/10 dark:border-white/15 bg-transparent cursor-pointer"
                 />
               </div>
             </div>
 
             {/* PIN Protection Toggle */}
-            <div className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] p-3.5 space-y-3">
+            <div className="rounded-[18px] liquid-glass-subtle p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   {deliveryConfig.pinProtected ? (
@@ -290,7 +290,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                       Require 4-Digit Gallery PIN
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Protects client gallery & print checkout behind an unlock screen
+                      Protects client gallery &amp; print checkout behind an unlock screen
                     </p>
                   </div>
                 </div>
@@ -299,10 +299,10 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                   onClick={() =>
                     setDeliveryConfig((prev) => ({ ...prev, pinProtected: !prev.pinProtected }))
                   }
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer shrink-0 ${
                     deliveryConfig.pinProtected
                       ? 'bg-[#D4AF37] text-[#090B10]'
-                      : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300'
+                      : 'bg-black/10 dark:bg-white/12 text-zinc-700 dark:text-zinc-300'
                   }`}
                 >
                   {deliveryConfig.pinProtected ? 'PIN Active' : 'Disabled'}
@@ -310,7 +310,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
               </div>
 
               {deliveryConfig.pinProtected && (
-                <div className="flex items-center gap-3 pt-2 border-t border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-3 pt-2 border-t border-black/10 dark:border-white/10">
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">Passcode:</span>
                   <input
                     type="text"
@@ -319,14 +319,14 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                     onChange={(e) =>
                       setDeliveryConfig((prev) => ({ ...prev, pinCode: e.target.value }))
                     }
-                    className="w-28 px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-white/15 bg-white dark:bg-[#11141D] text-sm font-mono tracking-widest text-zinc-900 dark:text-white"
+                    className="w-28 min-h-[40px] px-3 py-1.5 rounded-xl liquid-input text-sm font-mono tracking-widest text-zinc-900 dark:text-white"
                   />
                 </div>
               )}
             </div>
 
             {/* Download Permission Toggle */}
-            <div className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] p-3.5 flex items-center justify-between gap-3">
+            <div className="rounded-[18px] liquid-glass-subtle p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-[#10B981]" />
                 <div>
@@ -346,10 +346,10 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                     allowHighResDownload: !prev.allowHighResDownload,
                   }))
                 }
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`min-h-[38px] px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer shrink-0 ${
                   deliveryConfig.allowHighResDownload
                     ? 'bg-[#10B981] text-[#090B10]'
-                    : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300'
+                    : 'bg-black/10 dark:bg-white/12 text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 {deliveryConfig.allowHighResDownload ? 'Allowed' : 'Blocked'}
@@ -359,8 +359,8 @@ export const Module5PrintStoreDelivery: React.FC = () => {
         </div>
 
         {/* Right: Interactive Print Store Preview & Order Simulator */}
-        <div className="xl:col-span-7 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-zinc-200 dark:border-white/10 pb-3">
+        <div className="xl:col-span-7 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-black/10 dark:border-white/10 pb-3">
             <div className="flex items-center gap-2">
               <Frame className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
@@ -375,7 +375,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
             {/* Framed Mockup Preview */}
             <div className="md:col-span-6 space-y-3">
-              <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-[#F3EFE6] dark:bg-[#0D1017] p-6 flex flex-col items-center justify-center">
+              <div className="rounded-[20px] liquid-glass-subtle p-6 flex flex-col items-center justify-center">
                 <div
                   className={`w-full aspect-[4/3] overflow-hidden shadow-2xl transition-all ${
                     activeProduct.category === 'Wooden Frame'
@@ -404,7 +404,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
 
               {/* Select Photo Strip */}
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 mb-2">
+                <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 mb-2">
                   Select Shoot Photo to Frame
                 </p>
                 <div className="grid grid-cols-5 gap-2">
@@ -415,10 +415,10 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                         key={photo.id}
                         type="button"
                         onClick={() => setSelectedPhotoId(photo.id)}
-                        className={`aspect-square rounded-lg overflow-hidden border-2 transition cursor-pointer ${
+                        className={`aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer ${
                           selected
                             ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30'
-                            : 'border-transparent opacity-70 hover:opacity-100'
+                            : 'border-transparent opacity-75 hover:opacity-100'
                         }`}
                       >
                         <MediaFrame src={photo.url} alt={photo.fileName} className="w-full h-full" />
@@ -431,7 +431,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
 
             {/* Product Selector + Order Form */}
             <form onSubmit={handlePlaceOrder} className="md:col-span-6 space-y-3.5">
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {PRINT_STORE_CATALOG.map((product) => {
                   const selected = product.id === activeProduct.id;
                   const profit = product.clientPriceInr - product.studioCostInr;
@@ -440,10 +440,10 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                       key={product.id}
                       type="button"
                       onClick={() => setSelectedProductId(product.id)}
-                      className={`w-full text-left p-3 rounded-xl border transition cursor-pointer ${
+                      className={`w-full text-left p-3.5 rounded-[18px] border transition cursor-pointer ${
                         selected
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                          : 'border-zinc-200 dark:border-white/10 hover:border-zinc-400 dark:hover:border-white/25'
+                          ? 'border-[#D4AF37] bg-[#D4AF37]/12'
+                          : 'border-black/10 dark:border-white/12 hover:border-[#D4AF37]/45'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -464,7 +464,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <p className="mt-1.5 text-[11px] font-mono text-zinc-500 tabular-nums">
+                      <p className="mt-1.5 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
                         Lab Cost: ₹{product.studioCostInr.toLocaleString('en-IN')}
                       </p>
                     </button>
@@ -474,18 +474,18 @@ export const Module5PrintStoreDelivery: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-2.5 pt-1">
                 <div className="col-span-2">
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                     Buyer / Guest Name
                   </label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                    className="w-full min-h-[44px] px-3 py-2 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-1">
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                     Qty
                   </label>
                   <input
@@ -494,14 +494,14 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                     max={25}
                     value={orderQty}
                     onChange={(e) => setOrderQty(Math.max(1, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono text-zinc-900 dark:text-white tabular-nums"
+                    className="w-full min-h-[44px] px-3 py-2 rounded-xl liquid-input text-sm font-mono text-zinc-900 dark:text-white tabular-nums"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[46px] px-5 py-3 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
                 Place Print Order (₹
@@ -513,12 +513,12 @@ export const Module5PrintStoreDelivery: React.FC = () => {
       </div>
 
       {/* Fulfillment Queue Table */}
-      <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] overflow-hidden">
-        <div className="px-5 py-4 border-b border-zinc-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="rounded-[24px] liquid-glass overflow-hidden">
+        <div className="px-5 py-4 border-b border-black/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <Package className="w-4 h-4 text-[#D4AF37]" />
             <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
-              Active Print & Album Fulfillment Queue
+              Active Print &amp; Album Fulfillment Queue
             </h3>
           </div>
           <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
@@ -528,9 +528,9 @@ export const Module5PrintStoreDelivery: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 dark:bg-[#090B10] text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+            <thead className="bg-black/[0.03] dark:bg-white/[0.04] text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               <tr>
-                <th className="px-5 py-3">Order & Photo</th>
+                <th className="px-5 py-3">Order &amp; Photo</th>
                 <th className="px-4 py-3">Product Spec</th>
                 <th className="px-4 py-3">Client / Guest</th>
                 <th className="px-4 py-3 text-right">Client Total</th>
@@ -538,15 +538,15 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                 <th className="px-5 py-3">Lab Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-white/10">
+            <tbody className="divide-y divide-black/10 dark:divide-white/10">
               {printOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-zinc-50/70 dark:hover:bg-white/[0.02]">
+                <tr key={order.id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.03]">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <MediaFrame
                         src={order.photoUrl}
                         alt={order.photoFileName}
-                        className="w-11 h-11 rounded-lg shrink-0"
+                        className="w-11 h-11 rounded-xl shrink-0"
                       />
                       <div>
                         <p className="font-medium text-zinc-900 dark:text-white">
@@ -579,7 +579,7 @@ export const Module5PrintStoreDelivery: React.FC = () => {
                       onChange={(e) =>
                         updatePrintOrderStatus(order.id, e.target.value as PrintOrder['status'])
                       }
-                      className="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-white/15 bg-zinc-50 dark:bg-[#090B10] text-xs font-medium text-zinc-900 dark:text-white cursor-pointer"
+                      className="min-h-[40px] px-3 py-1.5 rounded-xl liquid-input text-xs font-medium text-zinc-900 dark:text-white cursor-pointer"
                     >
                       {ORDER_STATUS_SEQUENCE.map((st) => (
                         <option key={st} value={st}>

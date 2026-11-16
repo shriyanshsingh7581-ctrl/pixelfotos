@@ -211,7 +211,7 @@ export const Module1AICulling: React.FC = () => {
   const renderPhotoCard = (photo: ShootPhoto) => (
     <div
       key={photo.id}
-      className="group rounded-xl overflow-hidden bg-white dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 transition-colors"
+      className="group liquid-glass rounded-[22px] overflow-hidden hover:-translate-y-0.5"
     >
       <div className="relative aspect-[4/3]">
         <MediaFrame src={photo.url} alt={photo.fileName} className="w-full h-full" />
@@ -219,16 +219,16 @@ export const Module1AICulling: React.FC = () => {
         <button
           type="button"
           onClick={() => toggleAiSelected(photo.id)}
-          className={`absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+          className={`absolute top-3 right-3 min-h-[34px] px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer backdrop-blur-md ${
             photo.aiSelected
-              ? 'bg-[#10B981] text-white shadow'
-              : 'bg-black/65 text-zinc-200 border border-white/15 hover:bg-black/85'
+              ? 'bg-[#10B981] text-[#090B10] shadow-sm'
+              : 'bg-black/60 text-white border border-white/20 hover:bg-black/80'
           }`}
         >
           <Check className="w-3 h-3" />
           <span>{photo.aiSelected ? 'Selected' : 'Pick'}</span>
         </button>
-        <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[11px] text-white font-mono tabular-nums">
+        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-[11px] text-white font-mono tabular-nums">
           <span className="truncate">{photo.rawFileName}</span>
           <span className="text-[#D4AF37] shrink-0">
             Sharp {photo.sharpnessScore ?? photo.confidenceScore}%
@@ -236,9 +236,11 @@ export const Module1AICulling: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-3.5 space-y-2.5">
+      <div className="p-4 space-y-2.5">
         <div className="min-w-0">
-          <div className="text-xs font-semibold truncate">{photo.fileName}</div>
+          <div className="text-xs font-semibold truncate text-zinc-900 dark:text-white">
+            {photo.fileName}
+          </div>
           <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
             {TAG_LABELS[photo.cullingTag]} · {photo.poseClusterId}
           </div>
@@ -247,15 +249,15 @@ export const Module1AICulling: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-white/5">
-          <div className="flex items-center gap-0.5" aria-label="Star Rating">
+        <div className="flex items-center justify-between pt-2.5 border-t border-black/8 dark:border-white/8">
+          <div className="flex items-center gap-1" aria-label="Star Rating">
             {([1, 2, 3, 4, 5] as const).map((star) => (
               <button
                 key={star}
                 type="button"
                 onClick={() => updatePhotoRating(photo.id, star)}
                 aria-label={`Rate ${star} stars`}
-                className="p-0.5 cursor-pointer"
+                className="p-1 cursor-pointer"
               >
                 <Star
                   className={`w-3.5 h-3.5 ${
@@ -277,15 +279,15 @@ export const Module1AICulling: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37] tracking-wide">
+          <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
             Module 01 · Client-Side Laplacian Blur &amp; Burst Clustering
           </p>
-          <h2 className="text-2xl sm:text-3xl font-editorial font-semibold tracking-tight mt-0.5">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-0.5">
             AI Photo Culling Engine
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
             Runs HTML5 Canvas Laplacian variance blur detection, luminance/contrast scoring, and perceptual dHash duplicate grouping, then exports selected photos as a ZIP.
           </p>
         </div>
@@ -295,33 +297,33 @@ export const Module1AICulling: React.FC = () => {
             type="button"
             disabled={analyzing}
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60"
+            className="min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] active:scale-[0.98] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60"
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>{analyzing ? 'Analyzing Pixels...' : 'Upload Multi-Photos'}</span>
+            <span>{analyzing ? 'Analyzing Pixels...' : 'Upload Photos'}</span>
           </button>
           <button
             type="button"
             disabled={analyzing}
             onClick={handleAnalyzeExistingBatch}
-            className="px-3.5 py-2 rounded-lg text-xs font-medium border border-zinc-300 dark:border-white/15 hover:border-[#D4AF37] transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+            className="min-h-[44px] px-4 py-2 rounded-full text-xs font-medium liquid-glass-subtle hover:border-[#D4AF37] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
           >
             <ScanSearch className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Run Canvas Scan</span>
+            <span>Canvas Scan</span>
           </button>
           <button
             type="button"
             disabled={zipping}
             onClick={handleDownloadSelectedZip}
-            className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60"
+            className="min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 active:scale-[0.98] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60"
           >
             <Archive className="w-3.5 h-3.5" />
-            <span>{zipping ? 'Building ZIP...' : `Download Picks ZIP (${counts.aiSelected})`}</span>
+            <span>{zipping ? 'Building ZIP...' : `Export ZIP (${counts.aiSelected})`}</span>
           </button>
           <button
             type="button"
             onClick={handleExportCsvShortlist}
-            className="px-3 py-2 rounded-lg text-xs font-medium border border-zinc-300 dark:border-white/15 hover:border-[#D4AF37] transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+            className="min-h-[44px] px-3.5 py-2 rounded-full text-xs font-medium liquid-glass-subtle hover:border-[#D4AF37] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>CSV</span>
@@ -329,7 +331,7 @@ export const Module1AICulling: React.FC = () => {
           <button
             type="button"
             onClick={resetSampleBatch}
-            className="px-3 py-2 rounded-lg text-xs font-medium border border-zinc-300 dark:border-white/15 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+            className="min-h-[44px] px-3.5 py-2 rounded-full text-xs font-medium liquid-glass-subtle hover:border-zinc-400 transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
@@ -345,7 +347,7 @@ export const Module1AICulling: React.FC = () => {
         </div>
       </div>
 
-      {/* Dropzone */}
+      {/* Liquid Glass Dropzone */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -357,22 +359,22 @@ export const Module1AICulling: React.FC = () => {
           setIsDragging(false);
           processIncomingFiles(e.dataTransfer.files);
         }}
-        className={`rounded-2xl border border-dashed p-5 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+        className={`rounded-[24px] p-5 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-dashed ${
           isDragging
-            ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-            : 'border-zinc-300 dark:border-white/15 bg-white/70 dark:bg-[#11141D]/70 backdrop-blur-xl'
+            ? 'border-[#D4AF37] bg-[#D4AF37]/12'
+            : 'liquid-glass border-black/15 dark:border-white/20'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-[16px] bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <div className="text-sm font-semibold">
-              Drop multiple JPEG/PNG/WebP photos to compute real Laplacian sharpness &amp; dHash clusters
+              Drop JPEG / PNG / WebP photos to compute real Laplacian sharpness &amp; dHash clusters
             </div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400">
-              {counts.all} Total · {counts.aiSelected} Sharp Best Picks ·{' '}
+            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 tabular-nums">
+              {counts.all} Total · {counts.aiSelected} Best Picks ·{' '}
               {counts.closedEyes} Exposure Check · {counts.blurry} Blurry · {counts.clusters} Sequential Clusters
             </div>
           </div>
@@ -382,14 +384,14 @@ export const Module1AICulling: React.FC = () => {
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl bg-zinc-200/70 dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 w-fit">
+      {/* Scrollable Apple Segmented Filter Tabs */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-[18px] liquid-glass-subtle overflow-x-auto w-full sm:w-fit">
         {(
           [
             { id: 'all', label: `All (${counts.all})`, icon: Layers },
-            { id: 'ai_selected', label: `AI Selected (Best) (${counts.aiSelected})`, icon: Sparkles },
-            { id: 'grouped_poses', label: `Grouped Poses (${counts.clusters})`, icon: Layers },
-            { id: 'closed_eyes', label: `Exposure/Eye (${counts.closedEyes})`, icon: EyeOff },
+            { id: 'ai_selected', label: `Best Picks (${counts.aiSelected})`, icon: Sparkles },
+            { id: 'grouped_poses', label: `Grouped (${counts.clusters})`, icon: Layers },
+            { id: 'closed_eyes', label: `Exposure (${counts.closedEyes})`, icon: EyeOff },
             { id: 'blurry', label: `Blurry (${counts.blurry})`, icon: EyeOff },
           ] as const
         ).map((tab) => {
@@ -400,9 +402,9 @@ export const Module1AICulling: React.FC = () => {
               key={tab.id}
               type="button"
               onClick={() => setFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer ${
+              className={`min-h-[40px] px-3.5 py-1.5 rounded-[13px] text-xs font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                 active
-                  ? 'bg-white dark:bg-[#1E2230] text-[#11141D] dark:text-white shadow-xs'
+                  ? 'bg-white dark:bg-[#23252E] text-zinc-900 dark:text-white shadow-xs'
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
@@ -417,7 +419,7 @@ export const Module1AICulling: React.FC = () => {
         <div className="space-y-6">
           {groupedClusters.map(([clusterName, clusterPhotos]) => (
             <div key={clusterName} className="space-y-3">
-              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-2">
+              <div className="flex items-center justify-between border-b border-black/8 dark:border-white/10 pb-2">
                 <h3 className="text-sm font-semibold">{clusterName}</h3>
                 <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
                   {clusterPhotos.length} Similar Frames · dHash Grouped

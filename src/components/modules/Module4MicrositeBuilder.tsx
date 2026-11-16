@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Check, ExternalLink, MapPin, Plus, Trash2, Video } from 'lucide-react';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
 import { PIXELFOTOS_ASSETS } from '../../data/pixelfotosData';
+import { BottomSheetModal } from '../shared/BottomSheetModal';
 
 export const Module4MicrositeBuilder: React.FC = () => {
   const {
@@ -90,42 +91,44 @@ export const Module4MicrositeBuilder: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37] tracking-wide">
+          <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
             Module 04 · Live Route &amp; Multi-Event Publisher
           </p>
-          <h2 className="text-2xl sm:text-3xl font-editorial font-semibold tracking-tight mt-0.5">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-0.5">
             Dedicated Event Micro-Website Generator
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
             Create any custom client slug (saved to IndexedDB &amp; Firestore) and open it directly at its live route with Google Maps, schedule, live stream, and AI Face Match gallery.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 self-start">
+        <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto">
           <button
             type="button"
-            onClick={() => setShowNewEventForm((v) => !v)}
-            className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-[#D4AF37] text-[#B58E24] dark:text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            onClick={() => setShowNewEventForm(true)}
+            className="min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold liquid-glass-subtle border-[#D4AF37]/40 text-[#B58E24] dark:text-[#D4AF37] inline-flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>{showNewEventForm ? 'Close Event Creator' : 'New Custom Event Slug'}</span>
+            <span>New Event Slug</span>
           </button>
           <button
             type="button"
             onClick={() => openMicrositeBySlug(microsite.slug)}
-            className="px-5 py-2.5 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] transition-colors inline-flex items-center gap-2 whitespace-nowrap cursor-pointer"
+            className="min-h-[44px] px-5 py-2.5 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] transition inline-flex items-center gap-2 whitespace-nowrap cursor-pointer"
           >
             <ExternalLink className="w-4 h-4" />
-            <span>Open Live Route: /{microsite.slug}</span>
+            <span>Open Live: /{microsite.slug}</span>
           </button>
         </div>
       </div>
 
       {/* Multi-Event Switcher Strip */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-mono text-zinc-500 mr-1">Saved Events ({events.length}):</span>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <span className="text-xs font-mono text-zinc-500 shrink-0 mr-1">
+          Saved Events ({events.length}):
+        </span>
         {events.map((evt) => {
           const active = evt.id === activeEventId;
           return (
@@ -133,10 +136,10 @@ export const Module4MicrositeBuilder: React.FC = () => {
               key={evt.id}
               type="button"
               onClick={() => setActiveEventId(evt.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+              className={`min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-semibold border transition whitespace-nowrap shrink-0 cursor-pointer ${
                 active
                   ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-zinc-900 dark:text-white'
-                  : 'border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400'
+                  : 'border-black/10 dark:border-white/12 text-zinc-600 dark:text-zinc-400'
               }`}
             >
               {evt.coupleOrHostName} (/{evt.slug})
@@ -146,28 +149,40 @@ export const Module4MicrositeBuilder: React.FC = () => {
       </div>
 
       {createdNotice && (
-        <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 text-xs font-mono text-[#10B981]">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-[18px] border border-[#10B981]/30 bg-[#10B981]/12 text-xs font-mono text-[#10B981]">
           <div className="flex items-center gap-2">
-            <Check className="w-4 h-4" />
+            <Check className="w-4 h-4 shrink-0" />
             <span>{createdNotice}</span>
           </div>
           <button
             type="button"
             onClick={() => openMicrositeBySlug(microsite.slug)}
-            className="underline font-semibold cursor-pointer"
+            className="underline font-semibold cursor-pointer shrink-0"
           >
             Visit /{microsite.slug} →
           </button>
         </div>
       )}
 
-      {showNewEventForm && (
-        <form
-          onSubmit={handleCreateCustomEvent}
-          className="rounded-2xl border border-[#D4AF37]/40 bg-white dark:bg-[#11141D] p-5 grid grid-cols-1 md:grid-cols-5 gap-3 items-end"
-        >
-          <div className="md:col-span-2">
-            <label className="block text-[11px] font-medium text-zinc-500 mb-1">
+      {/* Slide-Up Bottom Sheet for Custom Event Creation */}
+      <BottomSheetModal
+        open={showNewEventForm}
+        onClose={() => setShowNewEventForm(false)}
+        title="Publish New Event Microsite"
+        subtitle="Creates Live /:eventSlug Route"
+        footer={
+          <button
+            type="submit"
+            form="new-event-slug-form"
+            className="w-full min-h-[48px] rounded-full text-sm font-semibold bg-[#10B981] text-[#090B10] cursor-pointer"
+          >
+            Save &amp; Publish Event Microsite
+          </button>
+        }
+      >
+        <form id="new-event-slug-form" onSubmit={handleCreateCustomEvent} className="space-y-3.5">
+          <div>
+            <label className="block text-xs font-medium text-zinc-500 mb-1">
               Couple / Host Name *
             </label>
             <input
@@ -176,56 +191,64 @@ export const Module4MicrositeBuilder: React.FC = () => {
               placeholder="e.g. Diya & Vikram"
               value={newCoupleName}
               onChange={(e) => setNewCoupleName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+              className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
             />
           </div>
-          <div>
-            <label className="block text-[11px] font-medium text-zinc-500 mb-1">Event Type</label>
-            <select
-              value={newEventType}
-              onChange={(e) => setNewEventType(e.target.value as typeof newEventType)}
-              className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
-            >
-              <option value="Wedding">Wedding</option>
-              <option value="Engagement">Engagement</option>
-              <option value="Birthday">Birthday</option>
-              <option value="Griha Pravesh">Griha Pravesh</option>
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Event Type</label>
+              <select
+                value={newEventType}
+                onChange={(e) => setNewEventType(e.target.value as typeof newEventType)}
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
+              >
+                <option value="Wedding">Wedding</option>
+                <option value="Engagement">Engagement</option>
+                <option value="Birthday">Birthday</option>
+                <option value="Griha Pravesh">Griha Pravesh</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Event Date</label>
+              <input
+                type="date"
+                value={newEventDate}
+                onChange={(e) => setNewEventDate(e.target.value)}
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-[11px] font-medium text-zinc-500 mb-1">Venue Name</label>
-            <input
-              type="text"
-              placeholder="e.g. Taj Falaknuma"
-              value={newVenueName}
-              onChange={(e) => setNewVenueName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
-            />
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="date"
-              value={newEventDate}
-              onChange={(e) => setNewEventDate(e.target.value)}
-              className="flex-1 px-2.5 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#10B981] text-[#090B10] cursor-pointer"
-            >
-              Publish
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">Venue Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Taj Falaknuma"
+                value={newVenueName}
+                onChange={(e) => setNewVenueName(e.target.value)}
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-500 mb-1">City</label>
+              <input
+                type="text"
+                value={newVenueCity}
+                onChange={(e) => setNewVenueCity(e.target.value)}
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-sm"
+              />
+            </div>
           </div>
         </form>
-      )}
+      </BottomSheetModal>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-7 rounded-2xl bg-white dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 p-6 space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div className="lg:col-span-7 liquid-glass rounded-[24px] p-5 sm:p-6 space-y-5">
           <h3 className="text-base font-semibold">Event Identity &amp; Custom Slug</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
                 Couple / Host Name
               </label>
               <input
@@ -239,12 +262,12 @@ export const Module4MicrositeBuilder: React.FC = () => {
                     slug: handleSlugify(val) || prev.slug,
                   }));
                 }}
-                className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
                 Event Category
               </label>
               <select
@@ -255,7 +278,7 @@ export const Module4MicrositeBuilder: React.FC = () => {
                     eventType: e.target.value as typeof prev.eventType,
                   }))
                 }
-                className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs sm:text-sm"
               >
                 <option value="Wedding">Wedding</option>
                 <option value="Engagement">Engagement</option>
@@ -265,12 +288,12 @@ export const Module4MicrositeBuilder: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
                 Custom URL Slug
               </label>
-              <div className="flex items-center rounded-lg overflow-hidden border border-zinc-300 dark:border-white/15 bg-zinc-50 dark:bg-[#090B10]">
-                <span className="px-2.5 py-2 text-[11px] font-mono text-zinc-500 border-r border-zinc-300 dark:border-white/15">
-                  pixelfotos.online/
+              <div className="flex items-center min-h-[44px] rounded-2xl overflow-hidden liquid-input">
+                <span className="px-3 py-2 text-[11px] font-mono text-zinc-500 border-r border-black/8 dark:border-white/10">
+                  /
                 </span>
                 <input
                   type="text"
@@ -281,13 +304,13 @@ export const Module4MicrositeBuilder: React.FC = () => {
                       slug: handleSlugify(e.target.value),
                     }))
                   }
-                  className="flex-1 px-2.5 py-2 text-xs font-mono bg-transparent focus:outline-none"
+                  className="flex-1 px-2.5 py-2 text-xs sm:text-sm font-mono bg-transparent focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
                 Primary Event Date
               </label>
               <input
@@ -296,12 +319,12 @@ export const Module4MicrositeBuilder: React.FC = () => {
                 onChange={(e) =>
                   setMicrosite((prev) => ({ ...prev, eventDate: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
                 Venue Name
               </label>
               <input
@@ -310,12 +333,12 @@ export const Module4MicrositeBuilder: React.FC = () => {
                 onChange={(e) =>
                   setMicrosite((prev) => ({ ...prev, venueName: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
                 Google Maps Location Query
               </label>
               <input
@@ -324,13 +347,13 @@ export const Module4MicrositeBuilder: React.FC = () => {
                 onChange={(e) =>
                   setMicrosite((prev) => ({ ...prev, googleMapsQuery: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs sm:text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
               Couple / Host Welcome Story
             </label>
             <textarea
@@ -339,12 +362,12 @@ export const Module4MicrositeBuilder: React.FC = () => {
               onChange={(e) =>
                 setMicrosite((prev) => ({ ...prev, storyText: e.target.value }))
               }
-              className="w-full px-3 py-2 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+              className="w-full px-3.5 py-2.5 rounded-2xl liquid-input text-xs sm:text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1">
+            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
               Live YouTube / RTMP Embed URL
             </label>
             <div className="flex items-center gap-2">
@@ -355,13 +378,13 @@ export const Module4MicrositeBuilder: React.FC = () => {
                 onChange={(e) =>
                   setMicrosite((prev) => ({ ...prev, youtubeStreamUrl: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-1.5">
+            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-2">
               Hero Cover Artwork
             </label>
             <div className="flex flex-wrap gap-2">
@@ -377,10 +400,10 @@ export const Module4MicrositeBuilder: React.FC = () => {
                   onClick={() =>
                     setMicrosite((prev) => ({ ...prev, heroImageUrl: cover.url }))
                   }
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer ${
+                  className={`min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-medium border cursor-pointer ${
                     microsite.heroImageUrl === cover.url
                       ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37]'
-                      : 'border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400'
+                      : 'border-black/10 dark:border-white/12 text-zinc-500 dark:text-zinc-400'
                   }`}
                 >
                   {cover.label}
@@ -391,7 +414,7 @@ export const Module4MicrositeBuilder: React.FC = () => {
         </div>
 
         <div className="lg:col-span-5 space-y-5">
-          <div className="rounded-2xl bg-white dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 p-5 space-y-4">
+          <div className="liquid-glass rounded-[24px] p-5 space-y-4">
             <h3 className="text-sm font-semibold flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#D4AF37]" />
               <span>Multi-Day Event Schedule ({microsite.schedule.length})</span>
@@ -401,7 +424,7 @@ export const Module4MicrositeBuilder: React.FC = () => {
               {microsite.schedule.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-zinc-50 dark:bg-[#090B10] border border-zinc-200 dark:border-white/10 flex items-start justify-between gap-3"
+                  className="p-3.5 rounded-[16px] liquid-glass-subtle flex items-start justify-between gap-3"
                 >
                   <div>
                     <div className="text-xs font-semibold">{item.title}</div>
@@ -418,9 +441,9 @@ export const Module4MicrositeBuilder: React.FC = () => {
                         schedule: prev.schedule.filter((s) => s.id !== item.id),
                       }))
                     }
-                    className="p-1 text-zinc-400 hover:text-rose-500 cursor-pointer"
+                    className="p-1.5 text-zinc-400 hover:text-rose-500 cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -428,39 +451,39 @@ export const Module4MicrositeBuilder: React.FC = () => {
 
             <form
               onSubmit={handleAddSchedule}
-              className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-100 dark:border-white/10"
+              className="grid grid-cols-2 gap-2 pt-3 border-t border-black/8 dark:border-white/10"
             >
               <input
                 type="text"
                 value={newSchTitle}
                 onChange={(e) => setNewSchTitle(e.target.value)}
                 placeholder="Function title (e.g. Mehendi)"
-                className="col-span-2 px-3 py-1.5 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="col-span-2 min-h-[42px] px-3 py-1.5 rounded-xl liquid-input text-xs"
               />
               <input
                 type="text"
                 value={newSchDate}
                 onChange={(e) => setNewSchDate(e.target.value)}
                 placeholder="Date"
-                className="px-3 py-1.5 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="min-h-[42px] px-3 py-1.5 rounded-xl liquid-input text-xs"
               />
               <input
                 type="text"
                 value={newSchTime}
                 onChange={(e) => setNewSchTime(e.target.value)}
                 placeholder="Time"
-                className="px-3 py-1.5 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="min-h-[42px] px-3 py-1.5 rounded-xl liquid-input text-xs"
               />
               <input
                 type="text"
                 value={newSchVenue}
                 onChange={(e) => setNewSchVenue(e.target.value)}
                 placeholder="Venue hall"
-                className="col-span-2 px-3 py-1.5 rounded-lg text-xs bg-zinc-50 dark:bg-[#090B10] border border-zinc-300 dark:border-white/15"
+                className="col-span-2 min-h-[42px] px-3 py-1.5 rounded-xl liquid-input text-xs"
               />
               <button
                 type="submit"
-                className="col-span-2 py-2 rounded-lg text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                className="col-span-2 min-h-[44px] py-2 rounded-full text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] inline-flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Timeline Event</span>
@@ -468,7 +491,7 @@ export const Module4MicrositeBuilder: React.FC = () => {
             </form>
           </div>
 
-          <div className="rounded-2xl bg-white dark:bg-[#11141D] border border-zinc-200 dark:border-white/10 p-5 space-y-3">
+          <div className="liquid-glass rounded-[24px] p-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
@@ -485,7 +508,7 @@ export const Module4MicrositeBuilder: React.FC = () => {
                 Open Directions
               </a>
             </div>
-            <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 h-40 bg-zinc-100 dark:bg-[#090B10]">
+            <div className="rounded-[18px] overflow-hidden border border-black/10 dark:border-white/12 h-40">
               <iframe
                 title="Event Venue Google Map"
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(

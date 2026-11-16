@@ -399,12 +399,12 @@ export const EventLifecycleWorkflow: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-zinc-200 dark:border-white/10 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-black/10 dark:border-white/10 pb-5">
         <div>
           <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
             Main Event Lifecycle · 6 Functional Stages
           </p>
-          <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
+          <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
             {microsite.coupleOrHostName} — End-to-End Event Command
           </h2>
           <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl">
@@ -415,14 +415,14 @@ export const EventLifecycleWorkflow: React.FC = () => {
         <button
           type="button"
           onClick={() => openMicrositeBySlug(microsite.slug)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition whitespace-nowrap shrink-0 cursor-pointer self-start lg:self-auto"
+          className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition whitespace-nowrap shrink-0 cursor-pointer self-start lg:self-auto"
         >
           <ExternalLink className="w-4 h-4" />
           Open /{microsite.slug} Live
         </button>
       </div>
 
-      {/* Horizontal 6-Stage Stepper */}
+      {/* Horizontal 6-Stage Bento Stepper */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {STAGES.map((stage) => {
           const active = activeLifecycleStage === stage.num;
@@ -431,10 +431,10 @@ export const EventLifecycleWorkflow: React.FC = () => {
               key={stage.num}
               type="button"
               onClick={() => setActiveLifecycleStage(stage.num)}
-              className={`text-left p-3 rounded-xl border transition cursor-pointer ${
+              className={`text-left min-h-[60px] p-3.5 rounded-[18px] transition cursor-pointer ${
                 active
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/12 text-zinc-900 dark:text-white'
-                  : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] text-zinc-600 dark:text-zinc-400 hover:border-zinc-400'
+                  ? 'liquid-glass border-[#D4AF37] bg-[#D4AF37]/15 text-zinc-900 dark:text-white'
+                  : 'liquid-glass-subtle text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]/40'
               }`}
             >
               <span
@@ -451,7 +451,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
       </div>
 
       {notice && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 text-sm text-emerald-800 dark:text-emerald-200">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border border-[#10B981]/35 bg-[#10B981]/12 backdrop-blur-md text-sm text-emerald-900 dark:text-emerald-200">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-[#10B981] shrink-0" />
             <span>{notice}</span>
@@ -459,7 +459,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
           <button
             type="button"
             onClick={() => setNotice(null)}
-            className="text-xs font-mono uppercase tracking-wider cursor-pointer"
+            className="min-h-[36px] px-2.5 text-xs font-mono uppercase tracking-wider cursor-pointer"
           >
             Dismiss
           </button>
@@ -469,8 +469,8 @@ export const EventLifecycleWorkflow: React.FC = () => {
       {/* STAGE 1: CREATE THE EVENT */}
       {activeLifecycleStage === 1 && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-7 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
+          <div className="xl:col-span-7 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
                 Stage 1 · Event Registration &amp; Custom Microsite Slug
               </h3>
@@ -493,7 +493,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   });
                   setNotice(`Created new saved event slug /${created.slug}. Customize details below!`);
                 }}
-                className="text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                className="min-h-[36px] px-3 rounded-full text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:bg-[#D4AF37]/10 cursor-pointer"
               >
                 + Save As New Event
               </button>
@@ -515,7 +515,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                       slug: slugify(name),
                     }));
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                 />
               </div>
 
@@ -531,7 +531,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                       eventType: e.target.value as typeof prev.eventType,
                     }))
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                 >
                   <option value="Wedding">Wedding</option>
                   <option value="Engagement">Engagement</option>
@@ -550,7 +550,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   onChange={(e) =>
                     setMicrosite((prev) => ({ ...prev, eventDate: e.target.value }))
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                 />
               </div>
 
@@ -558,7 +558,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
                   Custom URL Slug
                 </label>
-                <div className="flex items-center rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] overflow-hidden">
+                <div className="flex items-center min-h-[44px] rounded-xl liquid-input overflow-hidden">
                   <span className="px-3 text-xs font-mono text-zinc-500">/</span>
                   <input
                     type="text"
@@ -581,7 +581,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   onChange={(e) =>
                     setMicrosite((prev) => ({ ...prev, venueName: e.target.value }))
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                 />
               </div>
 
@@ -595,7 +595,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   onChange={(e) =>
                     setMicrosite((prev) => ({ ...prev, venueCity: e.target.value }))
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                 />
               </div>
             </div>
@@ -604,7 +604,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               <button
                 type="button"
                 onClick={handleStage1WhatsAppShare}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-full text-sm font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4" />
                 1-Click Share on WhatsApp
@@ -612,7 +612,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCopyEventLink}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-zinc-300 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium border border-black/15 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
               >
                 <Copy className="w-4 h-4" />
                 Copy Event Link
@@ -620,21 +620,21 @@ export const EventLifecycleWorkflow: React.FC = () => {
               <button
                 type="button"
                 onClick={() => openMicrositeBySlug(microsite.slug)}
-                className="ml-auto text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                className="ml-auto min-h-[40px] text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
               >
                 Visit Live /{microsite.slug} →
               </button>
             </div>
           </div>
 
-          <div className="xl:col-span-5 rounded-2xl border border-[#D4AF37]/30 bg-white dark:bg-[#11141D] p-5 space-y-4">
+          <div className="xl:col-span-5 rounded-[24px] liquid-glass border-[#D4AF37]/35 p-5 sm:p-6 space-y-4">
             <MediaFrame
               src={microsite.heroImageUrl}
               alt={microsite.coupleOrHostName}
-              className="aspect-[16/10] rounded-xl"
+              className="aspect-[16/10] rounded-[18px]"
             />
             <div className="space-y-1">
-              <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#D4AF37]">
+              <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
                 {microsite.eventType} · {microsite.eventDate}
               </p>
               <h4 className="text-2xl font-editorial font-semibold text-zinc-900 dark:text-white">
@@ -652,7 +652,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
       {/* STAGE 2: AT THE EVENT (QR STANDEE & GUEST SELFIE REGISTRATION) */}
       {activeLifecycleStage === 2 && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-5 rounded-2xl border border-[#D4AF37]/40 bg-[#090B10] text-white p-7 flex flex-col items-center text-center space-y-5 shadow-xl">
+          <div className="xl:col-span-5 rounded-[26px] border border-[#D4AF37]/40 bg-[#0A0C12] text-white p-7 flex flex-col items-center text-center space-y-5 shadow-2xl">
             <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-[#D4AF37]">
               PixelFotos Venue Standee
             </p>
@@ -681,7 +681,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               <button
                 type="button"
                 onClick={handleDownloadStandeeQr}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 Download QR PNG
@@ -689,7 +689,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border border-white/20 text-white hover:border-[#D4AF37] cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-full text-xs font-medium border border-white/20 text-white hover:border-[#D4AF37] cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 Print Tent Card
@@ -700,16 +700,16 @@ export const EventLifecycleWorkflow: React.FC = () => {
           <div className="xl:col-span-7 space-y-5">
             <form
               onSubmit={handleGuestRegisterSubmit}
-              className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4"
+              className="rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/10 pb-3">
+              <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-4 h-4 text-[#D4AF37]" />
                   <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
                     Live Guest QR Check-In &amp; 128-d Selfie Registration
                   </h3>
                 </div>
-                <span className="text-xs font-mono text-zinc-500">
+                <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
                   {registeredGuests.length} Guests Indexed
                 </span>
               </div>
@@ -732,7 +732,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                     type="button"
                     disabled={indexingSelfie}
                     onClick={() => selfieInputRef.current?.click()}
-                    className="text-[11px] font-medium text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    className="min-h-[36px] text-[11px] font-medium text-[#B58E24] dark:text-[#D4AF37] hover:underline cursor-pointer"
                   >
                     {indexingSelfie ? 'Indexing Face...' : 'Upload Selfie'}
                   </button>
@@ -745,7 +745,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                    className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
                   />
                   <div className="flex flex-col sm:flex-row gap-2.5">
                     <input
@@ -754,12 +754,12 @@ export const EventLifecycleWorkflow: React.FC = () => {
                       value={guestWhatsapp}
                       onChange={(e) => setGuestWhatsapp(e.target.value)}
                       required
-                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm font-mono text-zinc-900 dark:text-white"
+                      className="flex-1 min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-sm font-mono text-zinc-900 dark:text-white"
                     />
                     <button
                       type="submit"
                       disabled={indexingSelfie}
-                      className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition whitespace-nowrap cursor-pointer disabled:opacity-60"
+                      className="min-h-[44px] px-5 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition whitespace-nowrap cursor-pointer disabled:opacity-60"
                     >
                       Register &amp; Extract Vector
                     </button>
@@ -768,7 +768,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               </div>
             </form>
 
-            <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4">
+            <div className="rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
@@ -786,7 +786,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                       `Dispatched automated WhatsApp alerts to ${registeredGuests.length} registered guest(s).`
                     );
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition whitespace-nowrap shrink-0 cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 py-2 rounded-full text-xs font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Notify Registered Guests
@@ -797,7 +797,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 {registeredGuests.map((guest) => (
                   <div
                     key={guest.id}
-                    className="flex items-center gap-3 p-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10]"
+                    className="flex items-center gap-3 p-3 rounded-[16px] liquid-glass-subtle"
                   >
                     <img
                       src={guest.selfieUrl}
@@ -808,7 +808,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                       <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
                         {guest.name}
                       </p>
-                      <p className="text-[11px] font-mono text-zinc-500 truncate">
+                      <p className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
                         {guest.faceEmbedding ? '128-d Vector' : 'Cluster'} ·{' '}
                         {guest.notifiedOnFirstUpload ? 'Sent' : 'Queued'}
                       </p>
@@ -818,7 +818,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               </div>
 
               {dispatchLogs.length > 0 && (
-                <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 p-3 space-y-1.5 max-h-36 overflow-y-auto">
+                <div className="rounded-[16px] border border-[#10B981]/30 bg-[#10B981]/10 p-3.5 space-y-1.5 max-h-36 overflow-y-auto">
                   <p className="text-[11px] font-mono uppercase tracking-wider text-[#10B981]">
                     Live WhatsApp Dispatch Log ({dispatchLogs.length})
                   </p>
@@ -838,7 +838,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
       {/* STAGE 3: LIVE UPLOADING */}
       {activeLifecycleStage === 3 && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-6">
+          <div className="rounded-[24px] liquid-glass p-5 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="inline-flex items-center gap-2 text-xs font-mono text-[#10B981]">
@@ -862,7 +862,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   type="button"
                   onClick={handleSimulateCameraShot}
                   disabled={syncInProgress}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer disabled:opacity-60"
                 >
                   <Zap className="w-4 h-4" />
                   {syncInProgress ? 'Syncing Frame...' : 'Simulate Tether Capture'}
@@ -878,7 +878,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => tetherFileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-zinc-300 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium border border-black/15 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
                 >
                   <ImagePlus className="w-4 h-4" />
                   Upload Live Camera Files
@@ -887,18 +887,18 @@ export const EventLifecycleWorkflow: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
             {photos.slice(0, 10).map((photo) => (
               <div
                 key={photo.id}
-                className="rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] overflow-hidden"
+                className="rounded-[20px] liquid-glass overflow-hidden"
               >
                 <MediaFrame src={photo.url} alt={photo.fileName} className="aspect-[4/3]" />
-                <div className="p-2.5">
+                <div className="p-3">
                   <p className="text-xs font-medium text-zinc-900 dark:text-white truncate">
                     {photo.fileName}
                   </p>
-                  <p className="text-[11px] font-mono text-zinc-500 truncate">
+                  <p className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
                     {photo.cameraModel} · {photo.capturedAt}
                   </p>
                 </div>
@@ -911,7 +911,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
       {/* STAGE 4: REAL FACE-API.JS AI FACE MATCH */}
       {activeLifecycleStage === 4 && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4">
+          <div className="rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex flex-wrap items-center gap-3">
                 <ScanFace className="w-5 h-5 text-[#D4AF37]" />
@@ -929,7 +929,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 <select
                   value={activeGuest?.id || ''}
                   onChange={(e) => setSelectedGuestId(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-zinc-300 dark:border-white/15 bg-zinc-50 dark:bg-[#090B10] text-xs font-medium text-zinc-900 dark:text-white"
+                  className="min-h-[42px] px-3.5 py-2 rounded-full liquid-input text-xs font-medium text-zinc-900 dark:text-white"
                 >
                   {registeredGuests.map((g) => (
                     <option key={g.id} value={g.id}>
@@ -949,7 +949,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   type="button"
                   disabled={indexingGallery}
                   onClick={() => stage4SelfieRef.current?.click()}
-                  className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-[#D4AF37] text-[#B58E24] dark:text-[#D4AF37] cursor-pointer"
+                  className="min-h-[42px] px-4 py-2 rounded-full text-xs font-semibold border border-[#D4AF37] text-[#B58E24] dark:text-[#D4AF37] cursor-pointer"
                 >
                   Match Uploaded Selfie
                 </button>
@@ -958,7 +958,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   type="button"
                   disabled={indexingGallery}
                   onClick={() => handleRunRealFaceIndexingAndMatch()}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer disabled:opacity-60"
+                  className="min-h-[42px] px-5 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] shadow-sm cursor-pointer disabled:opacity-60"
                 >
                   {indexingGallery ? 'Computing 128-d Vectors...' : 'Index & Match Faces (face-api.js)'}
                 </button>
@@ -966,12 +966,12 @@ export const EventLifecycleWorkflow: React.FC = () => {
             </div>
 
             {faceStatus && (
-              <p className="text-xs font-mono text-[#10B981] bg-[#10B981]/10 border border-[#10B981]/30 px-3 py-2 rounded-lg">
+              <p className="text-xs font-mono text-[#10B981] bg-[#10B981]/12 border border-[#10B981]/30 px-3.5 py-2.5 rounded-xl">
                 {faceStatus}
               </p>
             )}
 
-            <div className="inline-flex p-1 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-[#090B10]">
+            <div className="inline-flex flex-wrap p-1.5 rounded-full liquid-glass-subtle">
               {[
                 { id: 'only_you' as const, label: `Only You (${matchedScores.size > 0 ? matchedScores.size : stage4Photos.length})` },
                 { id: 'all' as const, label: `All Photos (${photos.length})` },
@@ -981,10 +981,10 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   key={t.id}
                   type="button"
                   onClick={() => setFaceTab(t.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  className={`min-h-[38px] px-4 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer ${
                     faceTab === t.id
-                      ? 'bg-white dark:bg-[#11141D] text-zinc-900 dark:text-white shadow-xs'
-                      : 'text-zinc-600 dark:text-zinc-400'
+                      ? 'bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-300'
                   }`}
                 >
                   {t.label}
@@ -999,15 +999,15 @@ export const EventLifecycleWorkflow: React.FC = () => {
               return (
                 <div
                   key={photo.id}
-                  className="rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] overflow-hidden"
+                  className="rounded-[22px] liquid-glass overflow-hidden"
                 >
                   <MediaFrame src={photo.url} alt={photo.fileName} className="aspect-[4/3]" />
-                  <div className="p-3.5 flex items-center justify-between gap-2">
+                  <div className="p-4 flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
                         {photo.fileName}
                       </p>
-                      <p className="text-xs font-mono text-zinc-500">
+                      <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
                         {distConfidence
                           ? `${distConfidence}% 128-d match`
                           : photo.faceEmbeddings
@@ -1018,10 +1018,10 @@ export const EventLifecycleWorkflow: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleGuestLike(photo.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer shrink-0 ${
+                      className={`inline-flex items-center gap-1.5 min-h-[38px] px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer shrink-0 ${
                         photo.guestLiked
                           ? 'border-rose-500/40 bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                          : 'border-zinc-300 dark:border-white/15 text-zinc-700 dark:text-zinc-300'
+                          : 'border-black/15 dark:border-white/15 text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       <Heart className={`w-3.5 h-3.5 ${photo.guestLiked ? 'fill-current' : ''}`} />
@@ -1038,8 +1038,8 @@ export const EventLifecycleWorkflow: React.FC = () => {
       {/* STAGE 5: REAL FILE SYSTEM ACCESS API RAW ORIGINAL MATCHER */}
       {activeLifecycleStage === 5 && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4 h-fit">
-            <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-white/10 pb-3">
+          <div className="xl:col-span-5 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4 h-fit">
+            <div className="flex items-center gap-2 border-b border-black/10 dark:border-white/10 pb-3">
               <FolderSearch className="w-4 h-4 text-[#D4AF37]" />
               <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
                 1-Click Locate Originals (File System API)
@@ -1066,7 +1066,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 type="button"
                 disabled={matchingRaw}
                 onClick={handleLocateWithDirectoryPicker}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] transition cursor-pointer disabled:opacity-60"
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[46px] px-4 py-2.5 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c39c2b] shadow-sm transition cursor-pointer disabled:opacity-60"
               >
                 <FolderCheck className="w-4 h-4" />
                 <span>
@@ -1082,7 +1082,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 type="button"
                 disabled={matchingRaw}
                 onClick={() => rawFolderInputRef.current?.click()}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-zinc-300 dark:border-white/15 text-zinc-800 dark:text-zinc-200 hover:border-[#D4AF37] transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-sm font-semibold border border-black/15 dark:border-white/15 text-zinc-800 dark:text-zinc-200 hover:border-[#D4AF37] transition cursor-pointer"
               >
                 <Upload className="w-4 h-4" />
                 Select Folder Fallback (ZIP Output)
@@ -1091,7 +1091,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExportCopyScript}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 Download Shell Copy Script (.sh)
@@ -1099,7 +1099,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
             </div>
 
             {rawReport && (
-              <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/10 p-3.5 space-y-1 text-xs">
+              <div className="rounded-[18px] border border-[#10B981]/30 bg-[#10B981]/10 p-4 space-y-1 text-xs">
                 <p className="font-semibold text-[#10B981]">
                   Scanned {rawReport.totalScannedFiles} local file(s)
                 </p>
@@ -1116,8 +1116,8 @@ export const EventLifecycleWorkflow: React.FC = () => {
             )}
           </div>
 
-          <div className="xl:col-span-7 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-200 dark:border-white/10 flex items-center justify-between">
+          <div className="xl:col-span-7 rounded-[24px] liquid-glass overflow-hidden">
+            <div className="px-5 py-4 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
               <h4 className="text-sm font-semibold text-zinc-900 dark:text-white">
                 Guest-Liked Shortlist ({likedShortlist.length} Originals Queued)
               </h4>
@@ -1126,7 +1126,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
               </span>
             </div>
 
-            <div className="divide-y divide-zinc-200 dark:divide-white/10">
+            <div className="divide-y divide-black/10 dark:divide-white/10">
               {likedShortlist.map((photo) => {
                 const matchedEntry = rawReport?.matchedFiles.find(
                   (m) => m.shortlistPhotoName === photo.fileName
@@ -1137,7 +1137,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                       <MediaFrame
                         src={photo.url}
                         alt={photo.fileName}
-                        className="w-12 h-12 rounded-lg shrink-0"
+                        className="w-12 h-12 rounded-xl shrink-0"
                       />
                       <div>
                         <p className="text-sm font-mono font-semibold text-[#B58E24] dark:text-[#D4AF37]">
@@ -1150,7 +1150,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                     </div>
                     <span
                       className={`text-xs font-mono font-semibold ${
-                        matchedEntry ? 'text-[#10B981]' : 'text-zinc-500'
+                        matchedEntry ? 'text-[#10B981]' : 'text-zinc-500 dark:text-zinc-400'
                       }`}
                     >
                       {matchedEntry
@@ -1168,7 +1168,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
       {/* STAGE 6: 2 MONTHS LATER */}
       {activeLifecycleStage === 6 && (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-7 rounded-2xl border border-[#D4AF37]/35 bg-[#090B10] text-white p-6 space-y-5">
+          <div className="xl:col-span-7 rounded-[26px] border border-[#D4AF37]/35 bg-[#0A0C12] text-white p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono uppercase tracking-[0.22em] text-[#D4AF37]">
                 60-Day Automated Memory Lane
@@ -1191,12 +1191,12 @@ export const EventLifecycleWorkflow: React.FC = () => {
                   key={p.id}
                   src={p.url}
                   alt={p.fileName}
-                  className="aspect-square rounded-xl border border-white/10"
+                  className="aspect-square rounded-[14px] border border-white/10"
                 />
               ))}
             </div>
 
-            <div className="rounded-xl border border-white/15 bg-white/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="rounded-[18px] border border-white/15 bg-white/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="flex items-center gap-1 text-[#D4AF37]">
                   {[1, 2, 3, 4, 5].map((n) => (
@@ -1211,7 +1211,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 href={googleReviewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#D4AF37] text-[#090B10] whitespace-nowrap shrink-0"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[42px] px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] whitespace-nowrap shrink-0"
               >
                 Leave 5★ Review
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -1219,27 +1219,27 @@ export const EventLifecycleWorkflow: React.FC = () => {
             </div>
           </div>
 
-          <div className="xl:col-span-5 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] p-5 space-y-4">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-white/10 pb-3">
+          <div className="xl:col-span-5 rounded-[24px] liquid-glass p-5 sm:p-6 space-y-4">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-white border-b border-black/10 dark:border-white/10 pb-3">
               Automated Retention &amp; Google Review Scheduler
             </h3>
 
-            <div className="flex items-center justify-between rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] p-3.5">
+            <div className="flex items-center justify-between gap-3 rounded-[18px] liquid-glass-subtle p-4">
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-white">
                   Auto-Trigger at +60 Days
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Schedules Memory Lane &amp; 5-Star Review prompt via WhatsApp
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setAutoSchedule60Days((v) => !v)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
+                className={`min-h-[38px] px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer shrink-0 ${
                   autoSchedule60Days
                     ? 'bg-[#10B981] text-[#090B10]'
-                    : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300'
+                    : 'bg-black/10 dark:bg-white/12 text-zinc-700 dark:text-zinc-300'
                 }`}
               >
                 {autoSchedule60Days ? 'Scheduled' : 'Paused'}
@@ -1254,7 +1254,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 rows={3}
                 value={thankYouMessage}
                 onChange={(e) => setThankYouMessage(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-sm text-zinc-900 dark:text-white"
+                className="w-full px-3.5 py-2.5 rounded-xl liquid-input text-sm text-zinc-900 dark:text-white"
               />
             </div>
 
@@ -1266,7 +1266,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 type="url"
                 value={googleReviewUrl}
                 onChange={(e) => setGoogleReviewUrl(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-[#090B10] text-xs font-mono text-zinc-900 dark:text-white"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl liquid-input text-xs font-mono text-zinc-900 dark:text-white"
               />
             </div>
 
@@ -1282,7 +1282,7 @@ export const EventLifecycleWorkflow: React.FC = () => {
                 setRetentionSentAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
                 setNotice('Memory Lane & 5-Star Review prompt prepared on WhatsApp.');
               }}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 transition cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 min-h-[46px] px-5 py-3 rounded-full text-sm font-semibold bg-[#10B981] text-[#090B10] hover:opacity-90 shadow-sm transition cursor-pointer"
             >
               <MessageCircle className="w-4 h-4" />
               Send Memory Lane + Review on WhatsApp

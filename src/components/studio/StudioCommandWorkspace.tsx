@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Aperture,
   Camera,
@@ -28,12 +28,14 @@ import { Module4MicrositeBuilder } from '../modules/Module4MicrositeBuilder';
 import { Module5PrintStoreDelivery } from '../modules/Module5PrintStoreDelivery';
 import { Module6CRMExpenses } from '../modules/Module6CRMExpenses';
 import { Module7BillingUPI } from '../modules/Module7BillingUPI';
+import { MobileBottomDock } from '../shared/MobileBottomDock';
 
 interface NavItem {
   id: StudioModuleId;
   shortLabel: string;
   label: string;
   sublabel: string;
+  group: 'ai' | 'events' | 'crm';
   icon: React.FC<{ className?: string }>;
 }
 
@@ -43,20 +45,23 @@ const NAV_ITEMS: NavItem[] = [
     shortLabel: 'Lifecycle',
     label: '6-Stage Event Lifecycle',
     sublabel: 'QR · C-to-C · Face Match · RAW',
+    group: 'events',
     icon: Layers,
   },
   {
     id: 'culling',
     shortLabel: 'AI Cull',
     label: '01 · AI Photo Culling',
-    sublabel: 'Sharp Picks · Blink & Blur',
+    sublabel: 'Sharp Picks · Laplacian · ZIP',
+    group: 'ai',
     icon: Sparkles,
   },
   {
     id: 'retouch_lut',
     shortLabel: 'LUT Grade',
     label: '02 · LUT & Watermark',
-    sublabel: '.CUBE Upload · Batch Match',
+    sublabel: '.CUBE 3D · Canvas Export',
+    group: 'ai',
     icon: Palette,
   },
   {
@@ -64,6 +69,7 @@ const NAV_ITEMS: NavItem[] = [
     shortLabel: 'Retouch',
     label: '03 · Album AI Retouch',
     sublabel: 'Natural Skin · Hair · Glare',
+    group: 'ai',
     icon: Wand2,
   },
   {
@@ -71,6 +77,7 @@ const NAV_ITEMS: NavItem[] = [
     shortLabel: 'Microsite',
     label: '04 · Event Microsite',
     sublabel: 'Slug · Maps · Schedule · Live',
+    group: 'events',
     icon: Globe,
   },
   {
@@ -78,6 +85,7 @@ const NAV_ITEMS: NavItem[] = [
     shortLabel: 'Print Store',
     label: '05 · Gallery & Print Store',
     sublabel: 'PIN Gate · Frames · Profit',
+    group: 'events',
     icon: Frame,
   },
   {
@@ -85,13 +93,15 @@ const NAV_ITEMS: NavItem[] = [
     shortLabel: 'CRM & P&L',
     label: '06 · CRM, Team & Expenses',
     sublabel: 'Leads · Crew · Net Profit',
+    group: 'crm',
     icon: Users,
   },
   {
     id: 'billing_upi',
     shortLabel: 'Billing',
     label: '07 · Billing & UPI QR',
-    sublabel: 'Quotes · GST · Instant UPI',
+    sublabel: 'Quotes · GST PDF · UPI QR',
+    group: 'crm',
     icon: Receipt,
   },
 ];
@@ -112,9 +122,30 @@ export const StudioCommandWorkspace: React.FC = () => {
     netProfitInr,
   } = usePixelFotos();
 
-  const [collapsed, setCollapsed] = useState(false);
+  // iPadOS defaults compact 76px rail (expandable to 240px), Desktop expands 260px sidebar cleanly
+  const [tabletExpanded, setTabletExpanded] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [visualHeight, setVisualHeight] = useState<number | null>(null);
+
+  // Sync mobile native 3-zone shell viewport with window.visualViewport
+  useEffect(() => {
+    const syncViewport = () => {
+      if (window.innerWidth < 768 && window.visualViewport) {
+        setVisualHeight(Math.round(window.visualViewport.height));
+      } else {
+        setVisualHeight(null);
+      }
+    };
+    syncViewport();
+    window.visualViewport?.addEventListener('resize', syncViewport);
+    window.addEventListener('resize', syncViewport);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', syncViewport);
+      window.removeEventListener('resize', syncViewport);
+    };
+  }, []);
 
   const handleCloudSyncClick = async () => {
     setSyncBusy(true);
@@ -133,51 +164,70 @@ export const StudioCommandWorkspace: React.FC = () => {
   };
 
   const activeNav = NAV_ITEMS.find((n) => n.id === activeModule) || NAV_ITEMS[0];
+  const mobileGroupItems = NAV_ITEMS.filter((n) => n.group === activeNav.group);
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] dark:bg-[#090B10] text-zinc-900 dark:text-white flex">
-      {/* Desktop Collapsible Sidebar */}
+    <div
+      style={
+        visualHeight
+          ? { height: `${visualHeight}px`, maxHeight: `${visualHeight}px` }
+          : undefined
+      }
+      className="h-[100dvh] max-h-[100dvh] overflow-hidden md:h-auto md:max-h-none md:min-h-screen md:overflow-visible liquid-canvas text-zinc-900 dark:text-[#F5F5F7] flex flex-col md:flex-row transition-colors"
+    >
+      {/* Floating Translucent Glass Sidebar Rail: iPadOS (76px/240px) & Desktop (260px/76px) */}
       <aside
-        className={`hidden md:flex flex-col shrink-0 border-r border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0D1017] transition-all duration-200 ${
-          collapsed ? 'w-20' : 'w-72'
-        }`}
+        className={`hidden md:flex flex-col shrink-0 sticky top-3 lg:top-4 h-[calc(100vh-24px)] lg:h-[calc(100vh-32px)] my-3 ml-3 lg:my-4 lg:ml-4 rounded-[24px] liquid-glass transition-all duration-200 z-30 ${
+          tabletExpanded ? 'md:w-[240px]' : 'md:w-[76px]'
+        } ${desktopCollapsed ? 'lg:w-[76px]' : 'lg:w-[260px]'}`}
       >
-        <div className="h-16 px-4 flex items-center justify-between border-b border-zinc-200 dark:border-white/10">
+        {/* Brand + Rail Toggle */}
+        <div className="h-16 px-3.5 flex items-center justify-between border-b border-black/8 dark:border-white/10">
           <button
             type="button"
             onClick={() => setViewMode('landing')}
             className="flex items-center gap-2.5 text-left cursor-pointer min-w-0"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#D4AF37] text-[#090B10] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[14px] bg-[#D4AF37] text-[#090B10] flex items-center justify-center shrink-0 shadow-sm">
               <Aperture className="w-5 h-5" />
             </div>
-            {!collapsed && (
-              <div className="min-w-0">
-                <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-white truncate">
-                  PixelFotos
-                </p>
-                <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
-                  Studio OS
-                </p>
-              </div>
-            )}
+            <div
+              className={`min-w-0 ${tabletExpanded ? 'md:block' : 'md:hidden'} ${
+                desktopCollapsed ? 'lg:hidden' : 'lg:block'
+              }`}
+            >
+              <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-white truncate">
+                PixelFotos
+              </p>
+              <p className="text-[11px] font-mono text-[#B58E24] dark:text-[#D4AF37] truncate">
+                Studio OS
+              </p>
+            </div>
           </button>
 
+          {/* Tablet collapse/expand button */}
           <button
             type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label="Toggle sidebar"
-            className="p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
+            onClick={() => setTabletExpanded((v) => !v)}
+            aria-label="Toggle iPad navigation rail"
+            className="hidden md:flex lg:hidden w-8 h-8 rounded-xl liquid-glass-subtle items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer shrink-0"
           >
-            {collapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
+            {tabletExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
+
+          {/* Desktop collapse/expand button */}
+          <button
+            type="button"
+            onClick={() => setDesktopCollapsed((v) => !v)}
+            aria-label="Toggle desktop sidebar"
+            className="hidden lg:flex w-8 h-8 rounded-xl liquid-glass-subtle items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer shrink-0"
+          >
+            {desktopCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
+        {/* Navigation Items */}
+        <nav className="flex-1 p-2.5 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
@@ -187,74 +237,81 @@ export const StudioCommandWorkspace: React.FC = () => {
                 type="button"
                 onClick={() => setActiveModule(item.id)}
                 title={item.label}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition cursor-pointer ${
+                className={`w-full min-h-[44px] flex items-center gap-3 px-3 py-2 rounded-[14px] text-left transition cursor-pointer ${
                   active
-                    ? 'bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-zinc-900 dark:text-white'
-                    : 'border border-transparent text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.04]'
+                    ? 'bg-[#D4AF37]/18 border border-[#D4AF37]/45 text-zinc-900 dark:text-white shadow-xs'
+                    : 'border border-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'
                 }`}
               >
                 <Icon
-                  className={`w-4 h-4 shrink-0 ${
-                    active ? 'text-[#B58E24] dark:text-[#D4AF37]' : 'text-zinc-400'
+                  className={`w-[18px] h-[18px] shrink-0 ${
+                    active ? 'text-[#B58E24] dark:text-[#D4AF37]' : 'text-zinc-500 dark:text-zinc-400'
                   }`}
                 />
-                {!collapsed && (
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold truncate">{item.label}</p>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-500 truncate">
-                      {item.sublabel}
-                    </p>
-                  </div>
-                )}
+                <div
+                  className={`min-w-0 ${tabletExpanded ? 'md:block' : 'md:hidden'} ${
+                    desktopCollapsed ? 'lg:hidden' : 'lg:block'
+                  }`}
+                >
+                  <p className="text-xs font-semibold truncate">{item.label}</p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {item.sublabel}
+                  </p>
+                </div>
               </button>
             );
           })}
         </nav>
 
-        {!collapsed && (
-          <div className="p-4 border-t border-zinc-200 dark:border-white/10 space-y-2">
-            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">
+        {/* Bottom Profit & Quick Microsite Preview Card */}
+        <div
+          className={`p-3.5 border-t border-black/8 dark:border-white/10 space-y-2.5 ${
+            tabletExpanded ? 'md:block' : 'md:hidden'
+          } ${desktopCollapsed ? 'lg:hidden' : 'lg:block'}`}
+        >
+          <div className="rounded-[16px] liquid-glass-subtle p-3">
+            <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
               Active Event Profit
             </p>
-            <p className="text-lg font-mono font-semibold text-[#10B981] tabular-nums">
+            <p className="text-lg font-mono font-semibold text-[#10B981] tabular-nums mt-0.5">
               ₹{netProfitInr.toLocaleString('en-IN')}
             </p>
-            <button
-              type="button"
-              onClick={() => openMicrositeBySlug(microsite.slug)}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] cursor-pointer"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Client Portal Preview
-            </button>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={() => openMicrositeBySlug(microsite.slug)}
+            className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-[#090B10] hover:opacity-90 transition cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Client Portal Preview
+          </button>
+        </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col pb-20 md:pb-0">
-        {/* Top Command Header */}
-        <header className="sticky top-0 z-30 h-16 px-4 sm:px-6 border-b border-zinc-200 dark:border-white/10 bg-[#FAF9F6]/90 dark:bg-[#090B10]/90 backdrop-blur-md flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+      {/* Main Content Shell */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden md:overflow-visible">
+        {/* Compact Glass Top App Bar (56px on mobile Android shell; spacious 64px bar on iPad/Desktop) */}
+        <header className="h-[56px] md:h-16 px-3.5 sm:px-6 liquid-glass-header md:mx-4 md:mt-3 lg:mt-4 md:rounded-[20px] md:border md:border-black/8 dark:md:border-white/12 flex items-center justify-between gap-2.5 shrink-0 z-20">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={() => setViewMode('landing')}
-              className="md:hidden w-8 h-8 rounded-lg bg-[#D4AF37] text-[#090B10] flex items-center justify-center shrink-0"
+              className="md:hidden min-w-[40px] min-h-[40px] rounded-xl bg-[#D4AF37] text-[#090B10] flex items-center justify-center shrink-0 cursor-pointer"
               aria-label="Back to showcase"
             >
               <Aperture className="w-4 h-4" />
             </button>
             <div className="min-w-0">
-              <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 truncate">
-                {microsite.coupleOrHostName} · pixelfotos.online/{microsite.slug}
+              <p className="text-[10px] sm:text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
+                {microsite.coupleOrHostName} · /{microsite.slug}
               </p>
-              <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+              <p className="text-sm sm:text-base font-semibold text-zinc-900 dark:text-white truncate">
                 {activeNav.label}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={handleCloudSyncClick}
@@ -263,39 +320,45 @@ export const StudioCommandWorkspace: React.FC = () => {
                 syncError ||
                 (firebaseUser
                   ? `Signed in as ${firebaseUser.email || 'Studio Owner'} · Click to disconnect Cloud Sync`
-                  : 'Persisted locally in IndexedDB · Click to sync across devices with Google Firestore')
+                  : 'Local IndexedDB · Click to connect Google Firestore Sync')
               }
-              className={`hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition cursor-pointer whitespace-nowrap ${
+              className={`min-h-[40px] min-w-[40px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 rounded-full text-xs font-medium border transition cursor-pointer whitespace-nowrap ${
                 storageStatus === 'firestore_synced'
-                  ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#10B981]'
-                  : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]'
+                  ? 'border-[#10B981]/40 bg-[#10B981]/12 text-[#10B981]'
+                  : 'liquid-glass-subtle text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37]/50'
               }`}
             >
               {storageStatus === 'firestore_synced' ? (
-                <Cloud className="w-3.5 h-3.5" />
+                <Cloud className="w-4 h-4" />
               ) : (
-                <CloudOff className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <CloudOff className="w-4 h-4 text-[#D4AF37]" />
               )}
-              {syncBusy
-                ? 'Connecting...'
-                : storageStatus === 'firestore_synced'
-                ? 'Firestore Synced'
-                : 'Cloud Sync'}
+              <span className="hidden lg:inline">
+                {syncBusy
+                  ? 'Connecting...'
+                  : storageStatus === 'firestore_synced'
+                  ? 'Firestore Synced'
+                  : 'Cloud Sync'}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={toggleTheme}
               aria-label="Toggle Dark or Light Mode"
-              className="p-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer"
+              className="min-w-[40px] min-h-[40px] rounded-full liquid-glass-subtle flex items-center justify-center text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37]/50 cursor-pointer"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[#D4AF37]" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
 
             <button
               type="button"
               onClick={() => openMicrositeBySlug(microsite.slug)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#B58E24] dark:text-[#D4AF37] hover:bg-[#D4AF37]/20 transition cursor-pointer whitespace-nowrap"
+              className="hidden sm:inline-flex min-h-[40px] items-center gap-1.5 px-4 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] transition cursor-pointer whitespace-nowrap"
             >
               <Camera className="w-3.5 h-3.5" />
               View Client Microsite
@@ -304,15 +367,38 @@ export const StudioCommandWorkspace: React.FC = () => {
             <button
               type="button"
               onClick={() => setViewMode('landing')}
-              className="px-3.5 py-2 rounded-xl text-xs font-medium border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#11141D] text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37] cursor-pointer whitespace-nowrap"
+              className="hidden md:inline-flex min-h-[40px] items-center px-3.5 rounded-full text-xs font-medium liquid-glass-subtle text-zinc-700 dark:text-zinc-200 hover:border-[#D4AF37]/50 cursor-pointer whitespace-nowrap"
             >
               Showcase
             </button>
           </div>
         </header>
 
-        {/* Active Module Viewport */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
+        {/* Smooth App Momentum Scroll Body (pb-[120px] clears Floating Mobile Dock) */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain md:overflow-visible px-3.5 pt-4 pb-[120px] md:pb-8 md:px-5 lg:px-7 max-w-7xl w-full mx-auto space-y-5">
+          {/* Mobile Segmented Sub-Tab Bar for instant 1-thumb module switching inside current group */}
+          {mobileGroupItems.length > 1 && (
+            <div className="md:hidden flex items-center gap-1.5 p-1 rounded-[18px] liquid-glass-subtle overflow-x-auto">
+              {mobileGroupItems.map((sub) => {
+                const active = activeModule === sub.id;
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setActiveModule(sub.id)}
+                    className={`flex-1 min-h-[40px] px-3 rounded-[14px] text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                      active
+                        ? 'bg-[#D4AF37] text-[#090B10] shadow-xs'
+                        : 'text-zinc-600 dark:text-zinc-300'
+                    }`}
+                  >
+                    {sub.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {activeModule === 'lifecycle' && <EventLifecycleWorkflow />}
           {activeModule === 'culling' && <Module1AICulling />}
           {activeModule === 'retouch_lut' && <Module2RetouchAndLUT />}
@@ -324,28 +410,8 @@ export const StudioCommandWorkspace: React.FC = () => {
         </main>
       </div>
 
-      {/* Compact Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 h-16 border-t border-zinc-200 dark:border-white/10 bg-white/95 dark:bg-[#090B10]/95 backdrop-blur-md flex items-center overflow-x-auto px-2 gap-1">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const active = activeModule === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setActiveModule(item.id)}
-              className={`flex flex-col items-center justify-center min-w-[68px] h-12 px-2 rounded-xl text-[10px] font-medium shrink-0 cursor-pointer ${
-                active
-                  ? 'bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37]'
-                  : 'text-zinc-500 dark:text-zinc-400'
-              }`}
-            >
-              <Icon className="w-4 h-4 mb-0.5" />
-              <span className="truncate max-w-[64px]">{item.shortLabel}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* Floating Glass Bottom Navigation Dock on Mobile (< 768px) */}
+      <MobileBottomDock />
     </div>
   );
 };
