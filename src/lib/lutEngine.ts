@@ -57,6 +57,8 @@ export function parseCubeLutFile(text: string, fileName: string): LutPreset {
   return {
     id: `lut_cube_${Date.now()}`,
     name: titleMatch?.[1]?.trim() || fileName.replace(/\.(cube|3dl)$/i, ''),
+    category: 'Custom .CUBE',
+    description: `Uploaded ${finalSize}³ 3D .CUBE table`,
     source: 'custom_cube',
     fileName,
     lutSize: finalSize,
@@ -264,17 +266,20 @@ export async function renderGradedCanvas(options: {
     ctx.restore();
   }
 
-  // Real Watermark Rendering onto Canvas
+  // Real Watermark Rendering onto Canvas with custom Font & Scale
   if (watermark.enabled) {
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      await document.fonts.ready.catch(() => {});
+    }
     ctx.save();
-    ctx.globalAlpha = Math.max(0.05, Math.min(1, watermark.opacity / 100));
-    const pad = Math.round(Math.min(width, height) * 0.04);
+    ctx.globalAlpha = Math.max(0.08, Math.min(1, watermark.opacity / 100));
+    const pad = Math.round(Math.min(width, height) * 0.045);
     const wmScale = watermark.scale / 100;
 
     if (watermark.mode === 'logo' && watermark.logoDataUrl) {
       try {
         const logoImg = await loadImage(watermark.logoDataUrl);
-        const targetH = Math.max(24, Math.round(height * 0.09 * wmScale));
+        const targetH = Math.max(24, Math.round(height * 0.1 * wmScale));
         const ratio = (logoImg.naturalWidth || 120) / Math.max(1, logoImg.naturalHeight || 60);
         const targetW = Math.round(targetH * ratio);
 
@@ -295,15 +300,23 @@ export async function renderGradedCanvas(options: {
         }
         ctx.drawImage(logoImg, x, y, targetW, targetH);
       } catch {
-        // Fallback to text if logo fails
+        // Fallback if logo load fails
       }
     } else if (watermark.text.trim()) {
-      const fontSize = Math.max(12, Math.round(width * 0.024 * wmScale));
-      ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`;
-      const text = watermark.text.toUpperCase();
-      const metrics = ctx.measureText(text);
-      const boxW = metrics.width + fontSize * 1.1;
-      const boxH = fontSize * 1.7;
+      const selectedFont = watermark.fontFamily || 'Cormorant Garamond';
+      const isScript = selectedFont === 'Great Vibes';
+      const isSerif = selectedFont === 'Cormorant Garamond' || selectedFont === 'Cinzel';
+      const baseRatio = isScript ? 0.038 : isSerif ? 0.028 : 0.022;
+      const fontSize = Math.max(12, Math.round(width * baseRatio * wmScale));
+      const fontWeight = isScript ? '400' : isSerif ? '600' : '600';
+      const fontFallback = isScript ? 'cursive' : isSerif ? 'serif' : selectedFont === 'JetBrains Mono' ? 'monospace' : 'sans-serif';
+      ctx.font = `${fontWeight} ${fontSize}px "${selectedFont}", ${fontFallback}`;
+
+      const rawText = watermark.text.trim();
+      const displayText = selectedFont === 'Cinzel' || selectedFont === 'JetBrains Mono' ? rawText.toUpperCase() : rawText;
+      const metrics = ctx.measureText(displayText);
+      const boxW = metrics.width + fontSize * 1.15;
+      const boxH = fontSize * 1.65;
 
       let x = width - boxW - pad;
       let y = height - boxH - pad;
@@ -321,12 +334,19 @@ export async function renderGradedCanvas(options: {
         y = Math.round((height - boxH) / 2);
       }
 
-      ctx.fillStyle = 'rgba(9, 11, 16, 0.52)';
-      ctx.fillRect(x, y, boxW, boxH);
+      if (selectedFont === 'JetBrains Mono') {
+        ctx.fillStyle = 'rgba(9, 11, 16, 0.52)';
+        ctx.fillRect(x, y, boxW, boxH);
+      } else {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = Math.max(4, Math.round(fontSize * 0.25));
+        ctx.shadowOffsetY = 1;
+      }
+
       ctx.fillStyle = '#FFFFFF';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
-      ctx.fillText(text, x + boxW / 2, y + boxH / 2);
+      ctx.fillText(displayText, x + boxW / 2, y + boxH / 2);
     }
     ctx.restore();
   }

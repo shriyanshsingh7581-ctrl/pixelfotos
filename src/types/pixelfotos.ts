@@ -39,9 +39,13 @@ export interface ShootPhoto {
   capturedAt: string;
 }
 
+export type LutCategory = 'Kerala Wedding Style' | 'Signature Studio' | 'Custom .CUBE';
+
 export interface LutPreset {
   id: string;
   name: string;
+  category?: LutCategory;
+  description?: string;
   source: 'builtin' | 'custom_cube';
   fileName?: string;
   lutSize?: number;
@@ -56,10 +60,18 @@ export interface LutPreset {
   warmthOverlay: string;
 }
 
+export type WatermarkFont =
+  | 'Cormorant Garamond'
+  | 'Great Vibes'
+  | 'Cinzel'
+  | 'Plus Jakarta Sans'
+  | 'JetBrains Mono';
+
 export interface WatermarkConfig {
   enabled: boolean;
   mode: 'text' | 'logo';
   text: string;
+  fontFamily?: WatermarkFont;
   logoDataUrl: string;
   opacity: number;
   scale: number;
@@ -67,9 +79,14 @@ export interface WatermarkConfig {
 }
 
 export interface AlbumRetouchSettings {
+  presetName?: string;
+  masterIntensity: number;
   skinBlemishCleanup: number;
+  skinToneWarmth: number;
   flyawayHairReduction: number;
   faceOilGlareRemoval: number;
+  eyeTeethClarity: number;
+  dressDetailPop: number;
   backgroundSoftening: number;
   appliedToAlbum: boolean;
   lastProcessedCount: number;
@@ -107,12 +124,14 @@ export interface GalleryDeliveryConfig {
   pinProtected: boolean;
   pinCode: string;
   allowHighResDownload: boolean;
+  upiId?: string;
+  upiPayeeName?: string;
 }
 
 export interface PrintProduct {
   id: string;
   name: string;
-  category: 'Wooden Frame' | 'Acrylic Frame' | 'Canvas Print' | 'Luxury Album';
+  category: 'Wooden Frame' | 'Acrylic Frame' | 'Canvas Print' | 'Luxury Album' | 'Fine Art Print';
   dimensions: string;
   studioCostInr: number;
   clientPriceInr: number;
@@ -189,6 +208,7 @@ export interface QuotationInvoiceRecord {
   items: InvoiceLineItem[];
   advancePaidInr: number;
   upiId: string;
+  payeeName?: string;
   createdAt: string;
 }
 

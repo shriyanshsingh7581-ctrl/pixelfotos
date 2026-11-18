@@ -13,12 +13,12 @@ import {
   Moon,
   Radio,
   ScanFace,
+  Settings,
   ShoppingBag,
+  Sparkles,
   Sun,
-  X,
 } from 'lucide-react';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
-import { PRINT_STORE_CATALOG } from '../../data/pixelfotosData';
 import { triggerDirectDownload } from '../../lib/cloudinary';
 import {
   computeFaceEmbeddings,
@@ -36,9 +36,11 @@ export const ClientMicrositeView: React.FC = () => {
     theme,
     toggleTheme,
     setViewMode,
+    openStudioAt,
     microsite,
     deliveryConfig,
     photos,
+    printProducts,
     toggleGuestLike,
     updatePhotoEmbeddings,
     registeredGuests,
@@ -67,9 +69,9 @@ export const ClientMicrositeView: React.FC = () => {
   const [matchedMap, setMatchedMap] = useState<Map<string, number>>(new Map());
   const selfieFileRef = useRef<HTMLInputElement | null>(null);
 
-  // Print Order Modal / Slide-up Bottom Sheet
+  // Print Order Modal / Slide-up Bottom Sheet (Synced with Admin printProducts)
   const [printTargetPhoto, setPrintTargetPhoto] = useState<ShootPhoto | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState<string>(PRINT_STORE_CATALOG[0].id);
+  const [selectedProductId, setSelectedProductId] = useState<string>(printProducts[0]?.id || '');
   const [buyerName, setBuyerName] = useState<string>('Ananya Verma');
   const [orderNotice, setOrderNotice] = useState<string | null>(null);
 
@@ -103,9 +105,20 @@ export const ClientMicrositeView: React.FC = () => {
   }, [photos, galleryTab, activeGuest, matchedMap]);
 
   const activePrintProduct = useMemo(
-    () => PRINT_STORE_CATALOG.find((p) => p.id === selectedProductId) || PRINT_STORE_CATALOG[0],
-    [selectedProductId]
+    () => printProducts.find((p) => p.id === selectedProductId) || printProducts[0],
+    [printProducts, selectedProductId]
   );
+
+  const coupleMonogram = useMemo(() => {
+    const parts = microsite.coupleOrHostName
+      .split(/[&+]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]} & ${parts[1][0]}`.toUpperCase();
+    }
+    return microsite.coupleOrHostName.slice(0, 2).toUpperCase();
+  }, [microsite.coupleOrHostName]);
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,14 +231,14 @@ export const ClientMicrositeView: React.FC = () => {
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-mono text-[#B58E24] dark:text-[#D4AF37]">
-              {deliveryConfig.studioLogoText}
+            <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
+              {deliveryConfig.studioLogoText} · Private Wedding Microsite
             </p>
-            <h2 className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-white tracking-tight">
+            <h2 className="mt-2 text-3xl sm:text-4xl font-editorial font-semibold text-zinc-900 dark:text-white tracking-tight">
               {microsite.coupleOrHostName}
             </h2>
             <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-              Private client portal protected by PIN. (Demo PIN: {deliveryConfig.pinCode})
+              Private wedding gallery protected by PIN. (Demo PIN: {deliveryConfig.pinCode})
             </p>
           </div>
           <form onSubmit={handlePinSubmit} className="space-y-3">
@@ -243,7 +256,7 @@ export const ClientMicrositeView: React.FC = () => {
               type="submit"
               className="w-full min-h-[48px] py-3 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
             >
-              Unlock Client Gallery
+              Unlock Wedding Microsite
             </button>
           </form>
           <button
@@ -251,7 +264,7 @@ export const ClientMicrositeView: React.FC = () => {
             onClick={() => setViewMode('studio')}
             className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
           >
-            ← Return to Studio Command Workspace
+            ← Return to Studio Admin Panel
           </button>
         </div>
       </div>
@@ -260,77 +273,126 @@ export const ClientMicrositeView: React.FC = () => {
 
   return (
     <div className="min-h-screen liquid-canvas text-zinc-900 dark:text-[#F5F5F7] pb-[120px] md:pb-10">
-      {/* Floating Translucent Top Portal Bar */}
+      {/* 3-Zone Floating Wedding Microsite Top Navigation Bar */}
       <div className="sticky top-0 z-40 px-3 sm:px-6 pt-2.5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 rounded-[20px] liquid-glass-dock flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setViewMode('studio')}
-            className="min-h-[40px] inline-flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-[#B58E24] dark:hover:text-[#D4AF37] cursor-pointer whitespace-nowrap"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Studio</span>
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 rounded-[20px] liquid-glass-dock flex items-center justify-between gap-3">
+          {/* Zone 1: Couple Monogram & Wedding Title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 flex items-center justify-center font-editorial font-semibold text-xs text-[#B58E24] dark:text-[#D4AF37] shrink-0">
+              {coupleMonogram}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-editorial font-semibold text-zinc-900 dark:text-white truncate">
+                {microsite.coupleOrHostName}
+              </p>
+              <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 truncate">
+                {deliveryConfig.studioName} · /{microsite.slug}
+              </p>
+            </div>
+          </div>
 
-          <span className="hidden sm:inline-block text-xs font-mono text-zinc-500 dark:text-zinc-400 truncate">
-            pixelfotos.online/{microsite.slug} · {deliveryConfig.studioName}
-          </span>
+          {/* Zone 2: Wedding Microsite Anchor Links */}
+          <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+            <a href="#wedding-story" className="hover:text-[#D4AF37] transition whitespace-nowrap">
+              Our Story &amp; Schedule
+            </a>
+            <a href="#wedding-venue" className="hover:text-[#D4AF37] transition whitespace-nowrap">
+              Venue &amp; Live Stream
+            </a>
+            <a href="#wedding-gallery" className="hover:text-[#D4AF37] transition whitespace-nowrap">
+              Wedding Gallery &amp; Prints
+            </a>
+          </nav>
 
-          <div className="flex items-center gap-2">
+          {/* Zone 3: Theme + Admin Panel Sync Switch */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={toggleTheme}
               aria-label="Toggle theme"
               className="min-w-[40px] min-h-[40px] rounded-full liquid-glass-subtle flex items-center justify-center text-zinc-600 dark:text-zinc-300 cursor-pointer"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-[#D4AF37]" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[#D4AF37]" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
             <button
               type="button"
               onClick={() => setViewMode('landing')}
-              className="min-h-[40px] px-3.5 rounded-full text-xs font-medium liquid-glass-subtle text-zinc-700 dark:text-zinc-200 cursor-pointer whitespace-nowrap"
+              className="hidden sm:inline-flex min-h-[40px] items-center gap-1.5 px-3.5 rounded-full text-xs font-medium liquid-glass-subtle text-zinc-700 dark:text-zinc-200 cursor-pointer whitespace-nowrap"
             >
+              <ArrowLeft className="w-3.5 h-3.5" />
               Showcase
+            </button>
+            <button
+              type="button"
+              onClick={() => openStudioAt('microsite_builder')}
+              className="min-h-[40px] inline-flex items-center gap-1.5 px-4 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] cursor-pointer whitespace-nowrap"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              Admin Panel
             </button>
           </div>
         </div>
       </div>
 
-      {/* Editorial Hero Container */}
+      {/* Luxury Editorial Wedding Hero Banner */}
       <section className="max-w-7xl mx-auto px-3.5 sm:px-6 pt-5">
-        <div className="relative h-[54vh] sm:h-[62vh] min-h-[360px] rounded-[28px] overflow-hidden liquid-glass p-1.5">
-          <div className="relative w-full h-full rounded-[22px] overflow-hidden flex items-end">
+        <div className="relative h-[62vh] sm:h-[70vh] min-h-[420px] rounded-[30px] overflow-hidden liquid-glass p-1.5">
+          <div className="relative w-full h-full rounded-[24px] overflow-hidden flex items-end">
             <img
               src={microsite.heroImageUrl}
               alt={microsite.coupleOrHostName}
               referrerPolicy="no-referrer"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
 
-            <div className="relative z-10 w-full p-5 sm:p-10 text-white">
-              <p
-                className="text-xs font-mono tracking-wider"
-                style={{ color: deliveryConfig.accentColor }}
-              >
-                {deliveryConfig.studioLogoText} · {microsite.eventType} Celebration
-              </p>
-              <h1 className="mt-2 text-4xl sm:text-6xl font-semibold tracking-tight">
-                {microsite.coupleOrHostName}
-              </h1>
-              <p className="mt-2.5 text-sm sm:text-base text-zinc-200 max-w-2xl">
-                {microsite.storyText}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-mono text-zinc-300">
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  {microsite.eventDate}
-                </span>
-                <span>·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  {microsite.venueName}, {microsite.venueCity}
-                </span>
+            <div className="relative z-10 w-full p-6 sm:p-12 text-white flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="space-y-3 max-w-2xl">
+                <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.26em] text-[#D4AF37]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>
+                    {deliveryConfig.studioLogoText} · {microsite.eventType} Celebration
+                  </span>
+                </div>
+                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-editorial font-semibold tracking-tight leading-[1.02]">
+                  {microsite.coupleOrHostName}
+                </h1>
+                <p className="text-sm sm:text-base text-zinc-200 leading-relaxed">
+                  {microsite.storyText}
+                </p>
+                <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-300">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    {microsite.eventDate}
+                  </span>
+                  <span>·</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    {microsite.venueName}, {microsite.venueCity}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowFaceCheckin(true)}
+                  className="min-h-[46px] inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] shadow-lg cursor-pointer"
+                >
+                  <ScanFace className="w-4 h-4" />
+                  Find My Wedding Photos
+                </button>
+                <a
+                  href="#wedding-gallery"
+                  className="min-h-[46px] inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-white/15 backdrop-blur-md border border-white/25 text-white hover:bg-white/25 transition"
+                >
+                  <Frame className="w-4 h-4 text-[#D4AF37]" />
+                  Browse Print Store
+                </a>
               </div>
             </div>
           </div>
@@ -355,39 +417,50 @@ export const ClientMicrositeView: React.FC = () => {
         )}
 
         {/* Schedule + Google Maps + Live Stream Bento */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-5 liquid-glass rounded-[24px] p-5 sm:p-6 space-y-4">
-            <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-              Celebration Itinerary
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Event Schedule</h2>
-            <div className="space-y-3">
-              {microsite.schedule.map((item) => (
+        <section id="wedding-story" className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-5 liquid-glass rounded-[26px] p-6 sm:p-7 space-y-5">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
+                Wedding Celebrations
+              </p>
+              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold tracking-tight">
+                Ceremony &amp; Festivities Schedule
+              </h2>
+            </div>
+
+            <div className="space-y-3.5">
+              {microsite.schedule.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-[18px] liquid-glass-subtle space-y-1"
+                  className="p-4 rounded-[20px] liquid-glass-subtle space-y-1.5 border-l-2 border-l-[#D4AF37]"
                 >
                   <div className="flex items-center justify-between text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-                    <span>{item.dateLabel}</span>
+                    <span>
+                      0{idx + 1} · {item.dateLabel}
+                    </span>
                     <span>{item.timeLabel}</span>
                   </div>
-                  <p className="font-semibold text-zinc-900 dark:text-white">{item.title}</p>
+                  <p className="text-lg font-editorial font-semibold text-zinc-900 dark:text-white">
+                    {item.title}
+                  </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {item.venueHall} · Dress: {item.dressCode}
+                    {item.venueHall} · Attire: {item.dressCode}
                   </p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="lg:col-span-7 space-y-5">
-            <div className="liquid-glass rounded-[24px] p-5 space-y-3">
+          <div id="wedding-venue" className="lg:col-span-7 space-y-5">
+            <div className="liquid-glass rounded-[26px] p-5 sm:p-6 space-y-3.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-                    Venue Directions
+                  <p className="text-xs font-mono uppercase tracking-[0.2em] text-[#B58E24] dark:text-[#D4AF37]">
+                    Royal Venue &amp; Navigation
                   </p>
-                  <h3 className="text-lg font-semibold">{microsite.venueName}</h3>
+                  <h3 className="text-xl sm:text-2xl font-editorial font-semibold">
+                    {microsite.venueName}, {microsite.venueCity}
+                  </h3>
                 </div>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -397,7 +470,7 @@ export const ClientMicrositeView: React.FC = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B58E24] dark:text-[#D4AF37] hover:underline"
                 >
-                  Open Maps
+                  Open Google Maps
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -411,13 +484,15 @@ export const ClientMicrositeView: React.FC = () => {
               />
             </div>
 
-            <div className="liquid-glass rounded-[24px] p-5 space-y-3">
+            <div className="liquid-glass rounded-[26px] p-5 sm:p-6 space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Radio className="w-4 h-4 text-[#10B981]" />
-                  <h3 className="text-base font-semibold">Live Ceremony Stream</h3>
+                  <h3 className="text-lg font-editorial font-semibold">
+                    Live Wedding Ceremony Broadcast
+                  </h3>
                 </div>
-                <span className="text-xs font-mono text-[#10B981]">1080p Live</span>
+                <span className="text-xs font-mono text-[#10B981]">1080p Live Stream</span>
               </div>
               <div className="aspect-video rounded-[18px] overflow-hidden border border-black/10 dark:border-white/10 bg-black">
                 <iframe
@@ -432,15 +507,15 @@ export const ClientMicrositeView: React.FC = () => {
           </div>
         </section>
 
-        {/* Integrated Guest Gallery + Real face-api.js Match + Print Store */}
-        <section className="space-y-5">
+        {/* Integrated Guest Gallery + Real face-api.js Match + Synchronized Print Store */}
+        <section id="wedding-gallery" className="space-y-5">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-black/8 dark:border-white/10 pb-4">
             <div>
-              <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-                Live Client Gallery &amp; Print Store
+              <p className="text-xs font-mono uppercase tracking-[0.22em] text-[#B58E24] dark:text-[#D4AF37]">
+                Curated Wedding Gallery &amp; Fine-Art Print Store
               </p>
-              <h2 className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">
-                Moments Captured Live
+              <h2 className="mt-1 text-3xl sm:text-4xl font-editorial font-semibold tracking-tight">
+                Timeless Moments · Graded with {activeLut?.name || 'Studio LUT'}
               </h2>
             </div>
 
@@ -456,12 +531,12 @@ export const ClientMicrositeView: React.FC = () => {
 
               <div className="inline-flex p-1 rounded-[16px] liquid-glass-subtle">
                 {[
-                  { id: 'all' as const, label: 'All Photos' },
+                  { id: 'all' as const, label: `All Curated (${visiblePhotos.length})` },
                   {
                     id: 'only_you' as const,
                     label: `Only You (${matchedMap.size > 0 ? matchedMap.size : 'AI'})`,
                   },
-                  { id: 'unknown' as const, label: 'Unknown Faces' },
+                  { id: 'unknown' as const, label: 'Unindexed' },
                 ].map((t) => (
                   <button
                     key={t.id}
@@ -542,7 +617,7 @@ export const ClientMicrositeView: React.FC = () => {
                         className="min-h-[40px] inline-flex items-center gap-1 px-3 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
                       >
                         <Frame className="w-3.5 h-3.5" />
-                        Print
+                        Order Print
                       </button>
                     </div>
                   </div>
@@ -630,21 +705,24 @@ export const ClientMicrositeView: React.FC = () => {
         </form>
       </BottomSheetModal>
 
-      {/* Slide-Up Bottom Sheet for Print Order */}
+      {/* Slide-Up Bottom Sheet for Print Order (Reads Admin-Synced printProducts) */}
       <BottomSheetModal
         open={Boolean(printTargetPhoto)}
         onClose={() => setPrintTargetPhoto(null)}
-        title="Order Print or Heirloom Frame"
-        subtitle={`${deliveryConfig.studioName} Print Lab`}
+        title="Order Fine-Art Print, Frame or Album"
+        subtitle={`${deliveryConfig.studioName} Print Store · Synced with Admin Pricing`}
         footer={
-          <button
-            type="submit"
-            form="client-print-order-form"
-            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            Save &amp; Order Print · ₹{activePrintProduct.clientPriceInr.toLocaleString('en-IN')}
-          </button>
+          activePrintProduct ? (
+            <button
+              type="submit"
+              form="client-print-order-form"
+              className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Order {activePrintProduct.name} · ₹
+              {activePrintProduct.clientPriceInr.toLocaleString('en-IN')}
+            </button>
+          ) : null
         }
       >
         {printTargetPhoto && (
@@ -663,14 +741,14 @@ export const ClientMicrositeView: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              {PRINT_STORE_CATALOG.map((product) => (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {printProducts.map((product) => (
                 <button
                   key={product.id}
                   type="button"
                   onClick={() => setSelectedProductId(product.id)}
                   className={`w-full min-h-[52px] text-left p-3.5 rounded-[18px] border flex items-center justify-between cursor-pointer ${
-                    selectedProductId === product.id
+                    activePrintProduct?.id === product.id
                       ? 'border-[#D4AF37] bg-[#D4AF37]/12'
                       : 'border-black/10 dark:border-white/12'
                   }`}

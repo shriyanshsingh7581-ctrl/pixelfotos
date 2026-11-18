@@ -9,6 +9,7 @@ import {
   LifecycleStageNumber,
   LutPreset,
   PrintOrder,
+  PrintProduct,
   QuotationInvoiceRecord,
   RegisteredGuest,
   ShootPhoto,
@@ -32,15 +33,19 @@ import {
   INITIAL_TEAM_ASSIGNMENTS,
   INITIAL_WATERMARK_CONFIG,
   PIXELFOTOS_ASSETS,
+  PRINT_STORE_CATALOG,
 } from '../data/pixelfotosData';
 import { auth } from '../lib/firebase';
 import {
+  deleteOwnerDoc,
   fetchPublishedEventBySlug,
   saveCrmLeadToFirestore,
   saveEventToFirestore,
   saveExpenseToFirestore,
   saveInvoiceToFirestore,
   savePrintOrderToFirestore,
+  savePrintProductToFirestore,
+  saveStudioSettingsToFirestore,
   saveTeamTaskToFirestore,
   signInStudioWithGoogle,
   signOutStudio,
@@ -60,6 +65,7 @@ interface PersistedWorkspaceSnapshot {
   watermark: WatermarkConfig;
   albumRetouch: AlbumRetouchSettings;
   deliveryConfig: GalleryDeliveryConfig;
+  printProducts?: PrintProduct[];
   printOrders: PrintOrder[];
   clients: CRMClient[];
   teamAssignments: TeamAssignment[];
@@ -110,6 +116,7 @@ interface PixelFotosContextValue {
   activeLutId: string;
   setActiveLutId: (id: string) => void;
   addCustomLut: (lut: LutPreset) => void;
+  deleteLut: (lutId: string) => void;
   batchExposureMatch: boolean;
   setBatchExposureMatch: (v: boolean) => void;
   watermark: WatermarkConfig;
@@ -119,29 +126,42 @@ interface PixelFotosContextValue {
   albumRetouch: AlbumRetouchSettings;
   setAlbumRetouch: React.Dispatch<React.SetStateAction<AlbumRetouchSettings>>;
 
-  // Module 5: Delivery & Print Store
+  // Module 5: Delivery & Print Store Catalog CRUD
   deliveryConfig: GalleryDeliveryConfig;
   setDeliveryConfig: React.Dispatch<React.SetStateAction<GalleryDeliveryConfig>>;
+  printProducts: PrintProduct[];
+  addPrintProduct: (product: Omit<PrintProduct, 'id' | 'previewImageUrl'> & { previewImageUrl?: string }) => void;
+  updatePrintProduct: (productId: string, patch: Partial<Omit<PrintProduct, 'id'>>) => void;
+  deletePrintProduct: (productId: string) => void;
+  resetPrintCatalog: () => void;
   printOrders: PrintOrder[];
   placePrintOrder: (order: Omit<PrintOrder, 'id' | 'createdAt' | 'status'>) => void;
   updatePrintOrderStatus: (orderId: string, status: PrintOrder['status']) => void;
 
-  // Module 6: CRM, Team & Expenses
+  // Module 6: CRM, Team & Expenses (Full CRUD)
   clients: CRMClient[];
   addClient: (client: Omit<CRMClient, 'id' | 'communicationLogs'>) => void;
+  updateClient: (clientId: string, patch: Partial<Omit<CRMClient, 'id'>>) => void;
   updateClientStatus: (clientId: string, status: CRMClient['leadStatus']) => void;
   addClientLog: (clientId: string, note: string) => void;
+  deleteClient: (clientId: string) => void;
   teamAssignments: TeamAssignment[];
   updateTeamProgress: (id: string, progress: number) => void;
+  updateTeamAssignment: (id: string, patch: Partial<Omit<TeamAssignment, 'id'>>) => void;
   addTeamAssignment: (item: Omit<TeamAssignment, 'id'>) => void;
+  deleteTeamAssignment: (id: string) => void;
   expenses: StudioExpense[];
   addExpense: (exp: Omit<StudioExpense, 'id'>) => void;
+  updateExpense: (id: string, patch: Partial<Omit<StudioExpense, 'id'>>) => void;
+  deleteExpense: (id: string) => void;
 
-  // Module 7: Quotations & UPI Invoices
+  // Module 7: Quotations & UPI Invoices (Full CRUD)
   documents: QuotationInvoiceRecord[];
   addQuotation: (doc: Omit<QuotationInvoiceRecord, 'id' | 'createdAt'>) => void;
+  updateDocument: (docId: string, patch: Partial<Omit<QuotationInvoiceRecord, 'id' | 'createdAt'>>) => void;
   convertQuotationToInvoice: (docId: string) => void;
   markInvoicePaid: (docId: string) => void;
+  deleteDocument: (docId: string) => void;
 
   // Lifecycle Stage 2, 3, 4: Guest QR Registration & Face Match
   registeredGuests: RegisteredGuest[];
@@ -220,6 +240,7 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [watermark, setWatermark] = useState<WatermarkConfig>(INITIAL_WATERMARK_CONFIG);
   const [albumRetouch, setAlbumRetouch] = useState<AlbumRetouchSettings>(INITIAL_ALBUM_RETOUCH);
   const [deliveryConfig, setDeliveryConfig] = useState<GalleryDeliveryConfig>(INITIAL_DELIVERY_CONFIG);
+  const [printProducts, setPrintProducts] = useState<PrintProduct[]>(PRINT_STORE_CATALOG);
   const [printOrders, setPrintOrders] = useState<PrintOrder[]>(INITIAL_PRINT_ORDERS);
   const [clients, setClients] = useState<CRMClient[]>(INITIAL_CRM_CLIENTS);
   const [teamAssignments, setTeamAssignments] = useState<TeamAssignment[]>(INITIAL_TEAM_ASSIGNMENTS);
@@ -332,12 +353,27 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
         }
         if (Array.isArray(saved.photos) && saved.photos.length > 0) setPhotos(saved.photos);
-        if (Array.isArray(saved.luts) && saved.luts.length > 0) setLuts(saved.luts);
+        if (Array.isArray(saved.luts) && saved.luts.length > 0) {
+          // Merge any newly added built-in LUT presets (such as Kerala Wedding Style) with saved custom/user LUTs
+          const savedMap = new Map(saved.luts.map((l) => [l.id, l]));
+          const mergedBuiltins = BUILTIN_LUT_PRESETS.map((b) => savedMap.get(b.id) || b);
+          const customOnes = saved.luts.filter((l) => l.source === 'custom_cube');
+          setLuts([...customOnes, ...mergedBuiltins]);
+        }
         if (saved.activeLutId) setActiveLutId(saved.activeLutId);
         if (typeof saved.batchExposureMatch === 'boolean') setBatchExposureMatch(saved.batchExposureMatch);
-        if (saved.watermark) setWatermark(saved.watermark);
-        if (saved.albumRetouch) setAlbumRetouch(saved.albumRetouch);
-        if (saved.deliveryConfig) setDeliveryConfig(saved.deliveryConfig);
+        if (saved.watermark) {
+          setWatermark({ ...INITIAL_WATERMARK_CONFIG, ...saved.watermark });
+        }
+        if (saved.albumRetouch) {
+          setAlbumRetouch({ ...INITIAL_ALBUM_RETOUCH, ...saved.albumRetouch });
+        }
+        if (saved.deliveryConfig) {
+          setDeliveryConfig({ ...INITIAL_DELIVERY_CONFIG, ...saved.deliveryConfig });
+        }
+        if (Array.isArray(saved.printProducts) && saved.printProducts.length > 0) {
+          setPrintProducts(saved.printProducts);
+        }
         if (Array.isArray(saved.printOrders)) setPrintOrders(saved.printOrders);
         if (Array.isArray(saved.clients)) setClients(saved.clients);
         if (Array.isArray(saved.teamAssignments)) setTeamAssignments(saved.teamAssignments);
@@ -372,6 +408,7 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       watermark,
       albumRetouch,
       deliveryConfig,
+      printProducts,
       printOrders,
       clients,
       teamAssignments,
@@ -395,6 +432,7 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     watermark,
     albumRetouch,
     deliveryConfig,
+    printProducts,
     printOrders,
     clients,
     teamAssignments,
@@ -403,6 +441,18 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     registeredGuests,
     dispatchLogs,
   ]);
+
+  // Debounced sync of studio_settings to Firestore when signed in
+  useEffect(() => {
+    if (!hydrated || !firebaseUser) return;
+    const timer = setTimeout(() => {
+      saveStudioSettingsToFirestore(
+        { activeLutId, batchExposureMatch, watermark, deliveryConfig },
+        firebaseUser.uid
+      ).catch(() => {});
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [hydrated, firebaseUser, activeLutId, batchExposureMatch, watermark, deliveryConfig]);
 
   // Listen to Firebase Auth & subscribe to Firestore collections when signed in
   useEffect(() => {
@@ -428,6 +478,16 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       subscribeOwnerCollection<StudioExpense>('expenses', uid, (rows) => {
         if (rows.length > 0) setExpenses(rows);
       }),
+      subscribeOwnerCollection<PrintProduct>('print_products', uid, (rows) => {
+        if (rows.length > 0) {
+          setPrintProducts(
+            rows.map((p) => ({
+              ...p,
+              previewImageUrl: p.previewImageUrl || PIXELFOTOS_ASSETS.studioPrintFrame,
+            }))
+          );
+        }
+      }),
       subscribeOwnerCollection<PrintOrder>('print_orders', uid, (rows) => {
         if (rows.length > 0) setPrintOrders(rows);
       }),
@@ -440,14 +500,19 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const connectGoogleCloudSync = async () => {
     const user = await signInStudioWithGoogle();
-    // Seed current local events/records into user's Firestore workspace cleanly
     await Promise.allSettled([
       ...events.map((e) => saveEventToFirestore(e, user.uid, true)),
       ...clients.map((c) => saveCrmLeadToFirestore(c, user.uid, true)),
       ...teamAssignments.map((t) => saveTeamTaskToFirestore(t, user.uid, true)),
-      ...expenses.map((ex) => saveExpenseToFirestore(ex, user.uid)),
+      ...expenses.map((ex) => saveExpenseToFirestore(ex, user.uid, true)),
+      ...printProducts.map((pp) => savePrintProductToFirestore(pp, user.uid, true)),
       ...printOrders.map((po) => savePrintOrderToFirestore(po, user.uid, true)),
       ...documents.map((docItem) => saveInvoiceToFirestore(docItem, user.uid, true)),
+      saveStudioSettingsToFirestore(
+        { activeLutId, batchExposureMatch, watermark, deliveryConfig },
+        user.uid,
+        true
+      ),
     ]);
   };
 
@@ -524,6 +589,61 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setActiveLutId(lut.id);
   };
 
+  const deleteLut = (lutId: string) => {
+    setLuts((prev) => {
+      if (prev.length <= 1) return prev;
+      const filtered = prev.filter((l) => l.id !== lutId);
+      if (activeLutId === lutId && filtered.length > 0) {
+        setActiveLutId(filtered[0].id);
+      }
+      return filtered;
+    });
+  };
+
+  // Print Products CRUD
+  const addPrintProduct = (
+    product: Omit<PrintProduct, 'id' | 'previewImageUrl'> & { previewImageUrl?: string }
+  ) => {
+    const next: PrintProduct = {
+      ...product,
+      id: `prod_${Date.now()}`,
+      previewImageUrl: product.previewImageUrl || PIXELFOTOS_ASSETS.studioPrintFrame,
+    };
+    setPrintProducts((prev) => [next, ...prev]);
+    if (firebaseUser) {
+      savePrintProductToFirestore(next, firebaseUser.uid, true).catch(() => {});
+    }
+  };
+
+  const updatePrintProduct = (productId: string, patch: Partial<Omit<PrintProduct, 'id'>>) => {
+    setPrintProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== productId) return p;
+        const next = { ...p, ...patch };
+        if (firebaseUser) {
+          savePrintProductToFirestore(next, firebaseUser.uid, false).catch(() => {});
+        }
+        return next;
+      })
+    );
+  };
+
+  const deletePrintProduct = (productId: string) => {
+    setPrintProducts((prev) => prev.filter((p) => p.id !== productId));
+    if (firebaseUser) {
+      deleteOwnerDoc('print_products', productId).catch(() => {});
+    }
+  };
+
+  const resetPrintCatalog = () => {
+    setPrintProducts(PRINT_STORE_CATALOG);
+    if (firebaseUser) {
+      PRINT_STORE_CATALOG.forEach((p) => {
+        savePrintProductToFirestore(p, firebaseUser.uid, true).catch(() => {});
+      });
+    }
+  };
+
   const placePrintOrder = (order: Omit<PrintOrder, 'id' | 'createdAt' | 'status'>) => {
     const newOrder: PrintOrder = {
       ...order,
@@ -550,6 +670,7 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     );
   };
 
+  // CRM Leads CRUD
   const addClient = (client: Omit<CRMClient, 'id' | 'communicationLogs'>) => {
     const record: CRMClient = {
       ...client,
@@ -568,17 +689,21 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  const updateClientStatus = (clientId: string, leadStatus: CRMClient['leadStatus']) => {
+  const updateClient = (clientId: string, patch: Partial<Omit<CRMClient, 'id'>>) => {
     setClients((prev) =>
       prev.map((c) => {
         if (c.id !== clientId) return c;
-        const next = { ...c, leadStatus };
+        const next = { ...c, ...patch };
         if (firebaseUser) {
           saveCrmLeadToFirestore(next, firebaseUser.uid, false).catch(() => {});
         }
         return next;
       })
     );
+  };
+
+  const updateClientStatus = (clientId: string, leadStatus: CRMClient['leadStatus']) => {
+    updateClient(clientId, { leadStatus });
   };
 
   const addClientLog = (clientId: string, note: string) => {
@@ -605,17 +730,29 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     );
   };
 
-  const updateTeamProgress = (id: string, progress: number) => {
+  const deleteClient = (clientId: string) => {
+    setClients((prev) => prev.filter((c) => c.id !== clientId));
+    if (firebaseUser) {
+      deleteOwnerDoc('crm_leads', clientId).catch(() => {});
+    }
+  };
+
+  // Team Assignments CRUD
+  const updateTeamAssignment = (id: string, patch: Partial<Omit<TeamAssignment, 'id'>>) => {
     setTeamAssignments((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t;
-        const next = { ...t, progressPercent: progress };
+        const next = { ...t, ...patch };
         if (firebaseUser) {
           saveTeamTaskToFirestore(next, firebaseUser.uid, false).catch(() => {});
         }
         return next;
       })
     );
+  };
+
+  const updateTeamProgress = (id: string, progress: number) => {
+    updateTeamAssignment(id, { progressPercent: progress });
   };
 
   const addTeamAssignment = (item: Omit<TeamAssignment, 'id'>) => {
@@ -626,14 +763,43 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  const deleteTeamAssignment = (id: string) => {
+    setTeamAssignments((prev) => prev.filter((t) => t.id !== id));
+    if (firebaseUser) {
+      deleteOwnerDoc('team_tasks', id).catch(() => {});
+    }
+  };
+
+  // Expenses CRUD
   const addExpense = (exp: Omit<StudioExpense, 'id'>) => {
     const next: StudioExpense = { ...exp, id: `exp_${Date.now()}` };
     setExpenses((prev) => [next, ...prev]);
     if (firebaseUser) {
-      saveExpenseToFirestore(next, firebaseUser.uid).catch(() => {});
+      saveExpenseToFirestore(next, firebaseUser.uid, true).catch(() => {});
     }
   };
 
+  const updateExpense = (id: string, patch: Partial<Omit<StudioExpense, 'id'>>) => {
+    setExpenses((prev) =>
+      prev.map((e) => {
+        if (e.id !== id) return e;
+        const next = { ...e, ...patch };
+        if (firebaseUser) {
+          saveExpenseToFirestore(next, firebaseUser.uid, false).catch(() => {});
+        }
+        return next;
+      })
+    );
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    if (firebaseUser) {
+      deleteOwnerDoc('expenses', id).catch(() => {});
+    }
+  };
+
+  // Quotations & Invoices CRUD
   const addQuotation = (docItem: Omit<QuotationInvoiceRecord, 'id' | 'createdAt'>) => {
     const next: QuotationInvoiceRecord = {
       ...docItem,
@@ -644,6 +810,22 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (firebaseUser) {
       saveInvoiceToFirestore(next, firebaseUser.uid, true).catch(() => {});
     }
+  };
+
+  const updateDocument = (
+    docId: string,
+    patch: Partial<Omit<QuotationInvoiceRecord, 'id' | 'createdAt'>>
+  ) => {
+    setDocuments((prev) =>
+      prev.map((d) => {
+        if (d.id !== docId) return d;
+        const next = { ...d, ...patch };
+        if (firebaseUser) {
+          saveInvoiceToFirestore(next, firebaseUser.uid, false).catch(() => {});
+        }
+        return next;
+      })
+    );
   };
 
   const convertQuotationToInvoice = (docId: string) => {
@@ -682,6 +864,13 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return next;
       })
     );
+  };
+
+  const deleteDocument = (docId: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== docId));
+    if (firebaseUser) {
+      deleteOwnerDoc('invoices', docId).catch(() => {});
+    }
   };
 
   const registerGuest = (guest: {
@@ -777,6 +966,7 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         activeLutId,
         setActiveLutId,
         addCustomLut,
+        deleteLut,
         batchExposureMatch,
         setBatchExposureMatch,
         watermark,
@@ -785,22 +975,35 @@ export const PixelFotosProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setAlbumRetouch,
         deliveryConfig,
         setDeliveryConfig,
+        printProducts,
+        addPrintProduct,
+        updatePrintProduct,
+        deletePrintProduct,
+        resetPrintCatalog,
         printOrders,
         placePrintOrder,
         updatePrintOrderStatus,
         clients,
         addClient,
+        updateClient,
         updateClientStatus,
         addClientLog,
+        deleteClient,
         teamAssignments,
         updateTeamProgress,
+        updateTeamAssignment,
         addTeamAssignment,
+        deleteTeamAssignment,
         expenses,
         addExpense,
+        updateExpense,
+        deleteExpense,
         documents,
         addQuotation,
+        updateDocument,
         convertQuotationToInvoice,
         markInvoicePaid,
+        deleteDocument,
         registeredGuests,
         registerGuest,
         dispatchLogs,

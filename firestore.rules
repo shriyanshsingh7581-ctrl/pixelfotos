@@ -212,7 +212,7 @@ service cloud.firestore {
 
     function isValidInvoice(data) {
       return data.keys().hasAll(['id', 'ownerId', 'docNumber', 'clientId', 'clientName', 'eventTitle', 'stage', 'status', 'includeGst18', 'advancePaidInr', 'upiId', 'createdAt']) &&
-        data.keys().hasOnly(['id', 'ownerId', 'docNumber', 'clientId', 'clientName', 'eventTitle', 'stage', 'status', 'includeGst18', 'items', 'advancePaidInr', 'upiId', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'docNumber', 'clientId', 'clientName', 'eventTitle', 'stage', 'status', 'includeGst18', 'items', 'advancePaidInr', 'upiId', 'payeeName', 'createdAt']) &&
         isValidId(data.id) &&
         isValidId(data.ownerId) &&
         data.ownerId == request.auth.uid &&
@@ -226,7 +226,50 @@ service cloud.firestore {
         (!('items' in data) || (data.items is list && data.items.size() <= 40)) &&
         data.advancePaidInr is number && data.advancePaidInr >= 0 &&
         data.upiId is string && data.upiId.size() <= 120 &&
+        (!('payeeName' in data) || (data.payeeName is string && data.payeeName.size() <= 140)) &&
         data.createdAt is timestamp;
+    }
+
+    function isValidPrintProduct(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'category', 'dimensions', 'studioCostInr', 'clientPriceInr', 'isPublic', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'name', 'category', 'dimensions', 'studioCostInr', 'clientPriceInr', 'previewImageUrl', 'isPublic', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 140 &&
+        data.category is string && data.category in ['Wooden Frame', 'Acrylic Frame', 'Canvas Print', 'Luxury Album', 'Fine Art Print'] &&
+        data.dimensions is string && data.dimensions.size() >= 1 && data.dimensions.size() <= 100 &&
+        data.studioCostInr is number && data.studioCostInr >= 0 &&
+        data.clientPriceInr is number && data.clientPriceInr >= 0 &&
+        (!('previewImageUrl' in data) || (data.previewImageUrl is string && data.previewImageUrl.size() <= 500)) &&
+        data.isPublic is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidStudioSettings(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'activeLutId', 'batchExposureMatch', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'activeLutId', 'batchExposureMatch', 'watermarkText', 'watermarkFont', 'watermarkScale', 'watermarkOpacity', 'watermarkPosition', 'watermarkEnabled', 'studioName', 'studioLogoText', 'accentColor', 'pinProtected', 'allowHighResDownload', 'upiId', 'upiPayeeName', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.ownerId) &&
+        data.ownerId == request.auth.uid &&
+        data.activeLutId is string && data.activeLutId.size() >= 1 && data.activeLutId.size() <= 120 &&
+        data.batchExposureMatch is bool &&
+        (!('watermarkText' in data) || (data.watermarkText is string && data.watermarkText.size() <= 120)) &&
+        (!('watermarkFont' in data) || (data.watermarkFont is string && data.watermarkFont.size() <= 60)) &&
+        (!('watermarkScale' in data) || (data.watermarkScale is number && data.watermarkScale >= 25 && data.watermarkScale <= 300)) &&
+        (!('watermarkOpacity' in data) || (data.watermarkOpacity is number && data.watermarkOpacity >= 0 && data.watermarkOpacity <= 100)) &&
+        (!('watermarkPosition' in data) || (data.watermarkPosition is string && data.watermarkPosition.size() <= 30)) &&
+        (!('watermarkEnabled' in data) || data.watermarkEnabled is bool) &&
+        (!('studioName' in data) || (data.studioName is string && data.studioName.size() <= 140)) &&
+        (!('studioLogoText' in data) || (data.studioLogoText is string && data.studioLogoText.size() <= 80)) &&
+        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 20)) &&
+        (!('pinProtected' in data) || data.pinProtected is bool) &&
+        (!('allowHighResDownload' in data) || data.allowHighResDownload is bool) &&
+        (!('upiId' in data) || (data.upiId is string && data.upiId.size() <= 120)) &&
+        (!('upiPayeeName' in data) || (data.upiPayeeName is string && data.upiPayeeName.size() <= 140)) &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        data.updatedAt is timestamp;
     }
 
     // Admins Collection
@@ -418,7 +461,7 @@ service cloud.firestore {
           existing().ownerId == request.auth.uid &&
           incoming().ownerId == existing().ownerId &&
           incoming().createdAt == existing().createdAt &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['leadStatus', 'communicationLogs', 'packageName', 'packageValueInr'])
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'email', 'eventDate', 'leadStatus', 'communicationLogs', 'packageName', 'packageValueInr'])
         )
       );
       allow delete: if isValidId(leadId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
@@ -435,7 +478,7 @@ service cloud.firestore {
           existing().ownerId == request.auth.uid &&
           incoming().ownerId == existing().ownerId &&
           incoming().createdAt == existing().createdAt &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['progressPercent', 'taskTitle', 'role'])
+          incoming().diff(existing()).affectedKeys().hasOnly(['memberName', 'assignedEvent', 'progressPercent', 'taskTitle', 'role'])
         )
       );
       allow delete: if isValidId(taskId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
@@ -452,10 +495,49 @@ service cloud.firestore {
           existing().ownerId == request.auth.uid &&
           incoming().ownerId == existing().ownerId &&
           incoming().createdAt == existing().createdAt &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['amountInr', 'description', 'category'])
+          incoming().diff(existing()).affectedKeys().hasOnly(['eventName', 'amountInr', 'description', 'category', 'date'])
         )
       );
       allow delete: if isValidId(expenseId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
+    }
+
+    // Print Store Catalog Products
+    match /print_products/{productId} {
+      allow get: if isValidId(productId) && (
+        existing().isPublic == true ||
+        (isSignedIn() && existing().ownerId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow list: if existing().isPublic == true || (isSignedIn() && existing().ownerId == request.auth.uid);
+      allow create: if isVerifiedUser() && isValidId(productId) && isValidPrintProduct(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(productId) && isValidPrintProduct(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'dimensions', 'studioCostInr', 'clientPriceInr', 'previewImageUrl', 'isPublic', 'updatedAt'])
+        )
+      );
+      allow delete: if isValidId(productId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());
+    }
+
+    // Studio Settings (Branding, Watermark, LUT, UPI)
+    match /studio_settings/{settingId} {
+      allow get: if isValidId(settingId) && ((isSignedIn() && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isVerifiedUser() && isValidId(settingId) && settingId == request.auth.uid &&
+        isValidStudioSettings(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(settingId) && isValidStudioSettings(incoming()) && (
+        isAdmin() || (
+          existing().ownerId == request.auth.uid &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['activeLutId', 'batchExposureMatch', 'watermarkText', 'watermarkFont', 'watermarkScale', 'watermarkOpacity', 'watermarkPosition', 'watermarkEnabled', 'studioName', 'studioLogoText', 'accentColor', 'pinProtected', 'allowHighResDownload', 'upiId', 'upiPayeeName', 'updatedAt'])
+        )
+      );
+      allow delete: if isValidId(settingId) && isAdmin();
     }
 
     // Print Store Orders
@@ -488,7 +570,7 @@ service cloud.firestore {
           existing().status != 'Paid' &&
           incoming().ownerId == existing().ownerId &&
           incoming().createdAt == existing().createdAt &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['docNumber', 'stage', 'status', 'advancePaidInr', 'upiId', 'includeGst18', 'items'])
+          incoming().diff(existing()).affectedKeys().hasOnly(['docNumber', 'clientName', 'eventTitle', 'stage', 'status', 'advancePaidInr', 'upiId', 'payeeName', 'includeGst18', 'items'])
         )
       );
       allow delete: if isValidId(invoiceId) && ((isVerifiedUser() && existing().ownerId == request.auth.uid) || isAdmin());

@@ -75,6 +75,16 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
           style={{
             opacity: watermark.opacity / 100,
             transform: `scale(${watermark.scale / 100})`,
+            transformOrigin:
+              watermark.position === 'top-left'
+                ? 'top left'
+                : watermark.position === 'top-right'
+                ? 'top right'
+                : watermark.position === 'bottom-left'
+                ? 'bottom left'
+                : watermark.position === 'center'
+                ? 'center center'
+                : 'bottom right',
           }}
         >
           {watermark.mode === 'logo' && watermark.logoDataUrl ? (
@@ -84,9 +94,28 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
               className="max-h-10 w-auto object-contain drop-shadow"
             />
           ) : (
-            <span className="px-2 py-0.5 text-[10px] font-mono tracking-[0.2em] uppercase text-white/95 bg-black/45 backdrop-blur-xs rounded">
-              {watermark.text}
-            </span>
+            (() => {
+              const font = watermark.fontFamily || 'Cormorant Garamond';
+              const isScript = font === 'Great Vibes';
+              const isCaps = font === 'Cinzel' || font === 'JetBrains Mono';
+              const isMono = font === 'JetBrains Mono';
+              return (
+                <span
+                  style={{ fontFamily: `"${font}", serif` }}
+                  className={
+                    isMono
+                      ? 'px-2 py-0.5 text-[10px] tracking-[0.2em] uppercase text-white/95 bg-black/45 backdrop-blur-xs rounded'
+                      : isScript
+                      ? 'text-lg sm:text-xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] whitespace-nowrap'
+                      : `text-xs sm:text-sm font-semibold ${
+                          isCaps ? 'uppercase tracking-[0.18em]' : 'tracking-[0.06em]'
+                        } text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] whitespace-nowrap`
+                  }
+                >
+                  {watermark.text}
+                </span>
+              );
+            })()
           )}
         </div>
       )}

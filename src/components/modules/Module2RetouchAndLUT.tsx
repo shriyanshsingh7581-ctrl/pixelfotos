@@ -5,7 +5,10 @@ import {
   Download,
   ImagePlus,
   MoveHorizontal,
+  Palmtree,
   Sliders,
+  Trash2,
+  Type,
   Upload,
 } from 'lucide-react';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
@@ -15,7 +18,23 @@ import {
   parseCubeLutFile,
   renderGradedCanvas,
 } from '../../lib/lutEngine';
+import { LutCategory, WatermarkFont } from '../../types/pixelfotos';
 import { MediaFrame } from '../shared/MediaFrame';
+
+const WATERMARK_FONTS: { id: WatermarkFont; label: string; sample: string }[] = [
+  { id: 'Cormorant Garamond', label: 'Editorial Serif', sample: 'Cormorant Garamond' },
+  { id: 'Great Vibes', label: 'Wedding Script', sample: 'Great Vibes Calligraphy' },
+  { id: 'Cinzel', label: 'Royal Crest Caps', sample: 'CINZEL ENGRAVED' },
+  { id: 'Plus Jakarta Sans', label: 'Modern Studio', sample: 'Plus Jakarta Clean' },
+  { id: 'JetBrains Mono', label: 'Archival Proof', sample: 'JETBRAINS BADGE' },
+];
+
+const SCALE_PRESETS = [
+  { label: 'Subtle 70%', value: 70 },
+  { label: 'Standard 100%', value: 100 },
+  { label: 'Large 135%', value: 135 },
+  { label: 'Signature 175%', value: 175 },
+];
 
 export const Module2RetouchAndLUT: React.FC = () => {
   const {
@@ -24,6 +43,7 @@ export const Module2RetouchAndLUT: React.FC = () => {
     activeLutId,
     setActiveLutId,
     addCustomLut,
+    deleteLut,
     batchExposureMatch,
     setBatchExposureMatch,
     watermark,
@@ -31,6 +51,7 @@ export const Module2RetouchAndLUT: React.FC = () => {
   } = usePixelFotos();
 
   const [selectedPhotoId, setSelectedPhotoId] = useState<string>(photos[0]?.id || '');
+  const [lutCategoryTab, setLutCategoryTab] = useState<'All' | LutCategory>('Kerala Wedding Style');
   const [splitPercent, setSplitPercent] = useState<number>(52);
   const [lutNotice, setLutNotice] = useState<string | null>(null);
   const [rendering, setRendering] = useState<boolean>(false);
@@ -50,6 +71,19 @@ export const Module2RetouchAndLUT: React.FC = () => {
     () => luts.find((l) => l.id === activeLutId) || luts[0],
     [luts, activeLutId]
   );
+
+  const keralaLuts = useMemo(
+    () => luts.filter((l) => l.category === 'Kerala Wedding Style'),
+    [luts]
+  );
+
+  const filteredLuts = useMemo(() => {
+    if (lutCategoryTab === 'All') return luts;
+    if (lutCategoryTab === 'Custom .CUBE') {
+      return luts.filter((l) => l.source === 'custom_cube' || l.category === 'Custom .CUBE');
+    }
+    return luts.filter((l) => (l.category || 'Signature Studio') === lutCategoryTab);
+  }, [luts, lutCategoryTab]);
 
   // Real pixel-level Canvas rendering whenever photo, LUT, exposure match, or watermark changes
   useEffect(() => {
@@ -81,6 +115,7 @@ export const Module2RetouchAndLUT: React.FC = () => {
     const text = await file.text();
     const parsedLut = parseCubeLutFile(text, file.name);
     addCustomLut(parsedLut);
+    setLutCategoryTab('Custom .CUBE');
     const tripletCount = parsedLut.cubeTable ? Math.round(parsedLut.cubeTable.length / 3) : 0;
     setLutNotice(
       `Parsed ${file.name}: ${parsedLut.lutSize}³ 3D LUT (${tripletCount.toLocaleString()} RGB nodes) loaded into Canvas pixel engine.`
@@ -150,13 +185,13 @@ export const Module2RetouchAndLUT: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
           <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-            Module 02 · Real 3D .CUBE Pixel LUT &amp; Watermark Engine
+            Module 02 · Kerala Wedding LUTs (.CUBE) &amp; Custom Font Watermark Studio
           </p>
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-0.5">
-            Color Grading, .CUBE LUT &amp; Watermark Studio
+            LUTs Color Grading &amp; Watermark Studio
           </h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
-            Parses real .cube 3D LUT tables via trilinear HTML5 Canvas interpolation, renders logo PNG or text watermarks at pixel level, and exports high-res graded images.
+            Grade wedding galleries with dedicated Kerala Wedding Style LUTs, custom .cube 3D tables, and a resizable multi-font watermark compositor synced across client galleries.
           </p>
         </div>
 
@@ -204,14 +239,14 @@ export const Module2RetouchAndLUT: React.FC = () => {
         </div>
       )}
 
-      {/* Adaptive Split Workbench (Side-by-Side on iPad Landscape & Desktop) */}
+      {/* Adaptive Split Workbench */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
         {/* Left Canvas Split View */}
         <div className="md:col-span-7 space-y-4">
           <div className="liquid-glass rounded-[24px] p-4 sm:p-5 space-y-4">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">
-                Canvas Split View · {activePhoto?.fileName}
+                Live Graded Canvas · {activePhoto?.fileName}
               </span>
               <span className="font-mono text-[#B58E24] dark:text-[#D4AF37] shrink-0">
                 {rendering ? 'Rendering Pixels...' : `${activeLut.name} (${splitPercent}%)`}
@@ -255,15 +290,15 @@ export const Module2RetouchAndLUT: React.FC = () => {
               </div>
 
               <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-mono pointer-events-none">
-                BEFORE
+                ORIGINAL
               </div>
               <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[#D4AF37] text-[11px] font-mono pointer-events-none">
-                AFTER CANVAS
+                {activeLut.name.toUpperCase()}
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">Split</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Before / After</span>
               <input
                 type="range"
                 min={8}
@@ -294,42 +329,117 @@ export const Module2RetouchAndLUT: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Controls */}
+        {/* Right Controls: Dedicated Kerala Wedding Style LUTs + Resizable Multi-Font Watermark */}
         <div className="md:col-span-5 space-y-5">
+          {/* LUTs Card with Dedicated Kerala Wedding Style Section */}
           <div className="liquid-glass rounded-[24px] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-[#D4AF37]" />
-                <span>Color Matrices &amp; .CUBE LUTs</span>
+                <span>Color Grading LUTs (.CUBE)</span>
               </h3>
-              <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
-                {luts.length} Profiles
+              <span className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
+                {keralaLuts.length} Kerala Presets
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {luts.map((lut) => {
-                const isSelected = lut.id === activeLut.id;
+            {/* Category Filter Tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-[16px] liquid-glass-subtle overflow-x-auto">
+              {(
+                [
+                  { id: 'Kerala Wedding Style', label: 'Kerala Wedding Style', icon: Palmtree },
+                  { id: 'Signature Studio', label: 'Signature Studio' },
+                  { id: 'Custom .CUBE', label: 'Custom .CUBE' },
+                  { id: 'All', label: `All (${luts.length})` },
+                ] as const
+              ).map((tab) => {
+                const active = lutCategoryTab === tab.id;
                 return (
                   <button
-                    key={lut.id}
+                    key={tab.id}
                     type="button"
-                    onClick={() => setActiveLutId(lut.id)}
-                    className={`min-h-[54px] p-3 rounded-[16px] border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/15'
-                        : 'border-black/8 dark:border-white/10 hover:border-black/20 dark:hover:border-white/25'
+                    onClick={() => setLutCategoryTab(tab.id)}
+                    className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer inline-flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-[#D4AF37] text-[#090B10] shadow-xs'
+                        : 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white'
                     }`}
                   >
-                    <div className="text-xs font-semibold truncate">{lut.name}</div>
-                    <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {lut.source === 'custom_cube'
-                        ? `3D Trilinear ${lut.lutSize || 33}³ .cube`
-                        : 'Pixel Color Matrix'}
-                    </div>
+                    {tab.id === 'Kerala Wedding Style' && <Palmtree className="w-3.5 h-3.5" />}
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}
+            </div>
+
+            {lutCategoryTab === 'Kerala Wedding Style' && (
+              <div className="px-3.5 py-2.5 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-xs text-zinc-700 dark:text-zinc-200">
+                <span className="font-semibold text-[#B58E24] dark:text-[#D4AF37]">
+                  Kerala Wedding Color Science:
+                </span>{' '}
+                Calibrated for Kasavu mundu/saree ivory, 24K temple gold jewelry, tropical backwater greens, and brass nilavilakku warmth.
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
+              {filteredLuts.length === 0 ? (
+                <div className="p-4 rounded-2xl liquid-glass-subtle text-center space-y-2">
+                  <p className="text-xs text-zinc-500">No custom .CUBE LUTs uploaded yet.</p>
+                  <button
+                    type="button"
+                    onClick={() => lutInputRef.current?.click()}
+                    className="min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] cursor-pointer"
+                  >
+                    Upload .cube File
+                  </button>
+                </div>
+              ) : (
+                filteredLuts.map((lut) => {
+                  const isSelected = lut.id === activeLut.id;
+                  return (
+                    <div
+                      key={lut.id}
+                      onClick={() => setActiveLutId(lut.id)}
+                      className={`p-3 rounded-[16px] border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        isSelected
+                          ? 'border-[#D4AF37] bg-[#D4AF37]/15'
+                          : 'border-black/8 dark:border-white/10 hover:border-black/20 dark:hover:border-white/25'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
+                            {lut.name}
+                          </span>
+                          <span className="text-[10px] font-mono text-[#B58E24] dark:text-[#D4AF37] shrink-0">
+                            {lut.category || (lut.source === 'custom_cube' ? 'Custom .CUBE' : 'Signature')}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                          {lut.description ||
+                            (lut.source === 'custom_cube'
+                              ? `3D Trilinear ${lut.lutSize || 33}³ .cube`
+                              : 'Pixel Color Matrix')}
+                        </p>
+                      </div>
+
+                      {luts.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteLut(lut.id);
+                          }}
+                          aria-label={`Delete ${lut.name}`}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 shrink-0 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <div className="pt-3 border-t border-black/8 dark:border-white/10 flex items-center justify-between gap-4">
@@ -353,9 +463,13 @@ export const Module2RetouchAndLUT: React.FC = () => {
             </div>
           </div>
 
+          {/* Upgraded Watermark Tool with Font Family & Scale Controls */}
           <div className="liquid-glass rounded-[24px] p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Canvas Watermark Compositor</h3>
+              <div className="flex items-center gap-2">
+                <Type className="w-4 h-4 text-[#D4AF37]" />
+                <h3 className="text-sm font-semibold">Watermark Scale &amp; Typography</h3>
+              </div>
               <button
                 type="button"
                 onClick={() => setWatermark((w) => ({ ...w, enabled: !w.enabled }))}
@@ -379,7 +493,7 @@ export const Module2RetouchAndLUT: React.FC = () => {
                     : 'text-zinc-500 dark:text-zinc-400'
                 }`}
               >
-                Custom Text
+                Custom Text &amp; Font
               </button>
               <button
                 type="button"
@@ -395,12 +509,56 @@ export const Module2RetouchAndLUT: React.FC = () => {
             </div>
 
             {watermark.mode === 'text' ? (
-              <input
-                type="text"
-                value={watermark.text}
-                onChange={(e) => setWatermark((w) => ({ ...w, text: e.target.value }))}
-                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs"
-              />
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                    Watermark Signature Text
+                  </label>
+                  <input
+                    type="text"
+                    value={watermark.text}
+                    onChange={(e) => setWatermark((w) => ({ ...w, text: e.target.value }))}
+                    placeholder="Enter studio or couple watermark..."
+                    className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl liquid-input text-xs"
+                  />
+                </div>
+
+                {/* Custom Text Font Selector */}
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
+                    Watermark Text Font Style
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {WATERMARK_FONTS.map((font) => {
+                      const active = (watermark.fontFamily || 'Cormorant Garamond') === font.id;
+                      return (
+                        <button
+                          key={font.id}
+                          type="button"
+                          onClick={() =>
+                            setWatermark((w) => ({ ...w, fontFamily: font.id }))
+                          }
+                          className={`min-h-[44px] px-3 py-2 rounded-xl border text-left transition cursor-pointer ${
+                            active
+                              ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-zinc-900 dark:text-white'
+                              : 'border-black/10 dark:border-white/12 text-zinc-600 dark:text-zinc-300 hover:border-[#D4AF37]/40'
+                          }`}
+                        >
+                          <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                            {font.label}
+                          </div>
+                          <div
+                            style={{ fontFamily: `"${font.id}", serif` }}
+                            className="text-sm truncate mt-0.5"
+                          >
+                            {watermark.text || font.sample}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center justify-between gap-3">
                 <button
@@ -424,11 +582,50 @@ export const Module2RetouchAndLUT: React.FC = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Enhanced Watermark Scale (Resize) & Opacity Controls */}
+            <div className="space-y-3 pt-1">
               <div>
-                <div className="flex justify-between text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">
-                  <span>Opacity</span>
-                  <span className="font-mono tabular-nums">{watermark.opacity}%</span>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold">Watermark Size / Scale</span>
+                  <span className="font-mono text-[#B58E24] dark:text-[#D4AF37] tabular-nums">
+                    {watermark.scale}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={35}
+                  max={240}
+                  value={watermark.scale}
+                  onChange={(e) =>
+                    setWatermark((w) => ({ ...w, scale: Number(e.target.value) }))
+                  }
+                  className="w-full accent-[#D4AF37]"
+                  aria-label="Watermark size scale"
+                />
+                <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+                  {SCALE_PRESETS.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => setWatermark((w) => ({ ...w, scale: preset.value }))}
+                      className={`py-1 px-2 rounded-lg text-[10px] font-mono border cursor-pointer ${
+                        watermark.scale === preset.value
+                          ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37]'
+                          : 'border-black/8 dark:border-white/10 text-zinc-500'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold">Watermark Opacity</span>
+                  <span className="font-mono text-zinc-500 dark:text-zinc-400 tabular-nums">
+                    {watermark.opacity}%
+                  </span>
                 </div>
                 <input
                   type="range"
@@ -439,22 +636,7 @@ export const Module2RetouchAndLUT: React.FC = () => {
                     setWatermark((w) => ({ ...w, opacity: Number(e.target.value) }))
                   }
                   className="w-full accent-[#D4AF37]"
-                />
-              </div>
-              <div>
-                <div className="flex justify-between text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">
-                  <span>Scale</span>
-                  <span className="font-mono tabular-nums">{watermark.scale}%</span>
-                </div>
-                <input
-                  type="range"
-                  min={65}
-                  max={140}
-                  value={watermark.scale}
-                  onChange={(e) =>
-                    setWatermark((w) => ({ ...w, scale: Number(e.target.value) }))
-                  }
-                  className="w-full accent-[#D4AF37]"
+                  aria-label="Watermark opacity"
                 />
               </div>
             </div>

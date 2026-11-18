@@ -205,9 +205,55 @@
         "includeGst18": { "type": "boolean" },
         "advancePaidInr": { "type": "number" },
         "upiId": { "type": "string", "maxLength": 120 },
+        "payeeName": { "type": "string", "maxLength": 140 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "ownerId", "docNumber", "clientId", "clientName", "eventTitle", "stage", "status", "includeGst18", "advancePaidInr", "upiId", "createdAt"]
+    },
+    "PrintProductDoc": {
+      "title": "PrintProductDoc",
+      "description": "Studio print size, frame, and album catalog item synced to client stores.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 140 },
+        "category": { "type": "string", "enum": ["Wooden Frame", "Acrylic Frame", "Canvas Print", "Luxury Album", "Fine Art Print"] },
+        "dimensions": { "type": "string", "maxLength": 100 },
+        "studioCostInr": { "type": "number" },
+        "clientPriceInr": { "type": "number" },
+        "previewImageUrl": { "type": "string", "maxLength": 500 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "category", "dimensions", "studioCostInr", "clientPriceInr", "isPublic", "createdAt", "updatedAt"]
+    },
+    "StudioSettingsDoc": {
+      "title": "StudioSettingsDoc",
+      "description": "Synchronized studio branding, watermark, LUT, and UPI configuration.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "activeLutId": { "type": "string", "maxLength": 120 },
+        "batchExposureMatch": { "type": "boolean" },
+        "watermarkText": { "type": "string", "maxLength": 120 },
+        "watermarkFont": { "type": "string", "maxLength": 60 },
+        "watermarkScale": { "type": "number" },
+        "watermarkOpacity": { "type": "number" },
+        "watermarkPosition": { "type": "string", "maxLength": 30 },
+        "watermarkEnabled": { "type": "boolean" },
+        "studioName": { "type": "string", "maxLength": 140 },
+        "studioLogoText": { "type": "string", "maxLength": 80 },
+        "accentColor": { "type": "string", "maxLength": 20 },
+        "pinProtected": { "type": "boolean" },
+        "allowHighResDownload": { "type": "boolean" },
+        "upiId": { "type": "string", "maxLength": 120 },
+        "upiPayeeName": { "type": "string", "maxLength": 140 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "activeLutId", "batchExposureMatch", "updatedAt"]
     }
   },
   "firestore": {
@@ -250,6 +296,14 @@
     "/expenses/{expenseId}": {
       "schema": { "$ref": "#/entities/StudioExpenseDoc" },
       "description": "Per-event studio expenses"
+    },
+    "/print_products/{productId}": {
+      "schema": { "$ref": "#/entities/PrintProductDoc" },
+      "description": "Admin-managed print sizes, frames, and album products"
+    },
+    "/studio_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/StudioSettingsDoc" },
+      "description": "Studio-wide watermark, LUT, branding, and UPI preferences"
     },
     "/print_orders/{orderId}": {
       "schema": { "$ref": "#/entities/PrintOrderDoc" },

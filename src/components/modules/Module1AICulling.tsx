@@ -2,14 +2,22 @@ import React, { useMemo, useRef, useState } from 'react';
 import {
   Archive,
   Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  CloudUpload,
   Download,
   EyeOff,
+  FileImage,
+  FolderUp,
   Layers,
+  Loader2,
   RotateCcw,
   ScanSearch,
   Sparkles,
   Star,
   Upload,
+  X,
 } from 'lucide-react';
 import { usePixelFotos } from '../../contexts/PixelFotosContext';
 import { PIXELFOTOS_ASSETS } from '../../data/pixelfotosData';
@@ -25,12 +33,40 @@ import { MediaFrame } from '../shared/MediaFrame';
 
 type CullingFilter = 'all' | 'ai_selected' | 'grouped_poses' | 'closed_eyes' | 'blurry';
 
+interface DriveUploadItem {
+  id: string;
+  fileName: string;
+  sizeLabel: string;
+  status: 'queued' | 'uploading' | 'completed';
+  sharpness?: number;
+}
+
+interface DriveUploadTrackerState {
+  active: boolean;
+  minimized: boolean;
+  completed: boolean;
+  totalSelected: number;
+  uploadedCount: number;
+  remainingCount: number;
+  progressPercent: number;
+  currentFileName: string;
+  items: DriveUploadItem[];
+}
+
 const TAG_LABELS: Record<CullingTag, string> = {
   best_pick: 'Sharp Best Pick',
   closed_eyes: 'Exposure / Eye Check',
   blurry: 'Low Laplacian Sharpness',
   duplicate: 'Similar Burst Duplicate',
 };
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const pauseFrame = (ms = 90) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export const Module1AICulling: React.FC = () => {
   const {
@@ -47,6 +83,7 @@ export const Module1AICulling: React.FC = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [zipping, setZipping] = useState(false);
   const [cullNotice, setCullNotice] = useState<string | null>(null);
+  const [uploadTracker, setUploadTracker] = useState<DriveUploadTrackerState | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const counts = useMemo(() => {
@@ -76,25 +113,61 @@ export const Module1AICulling: React.FC = () => {
     return Array.from(map.entries());
   }, [filteredPhotos]);
 
-  const processIncomingFiles = async (fileList: FileList | null) => {
+  const processIncomingFiles = async (fileList: FileList | File[] | null) => {
     if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    const total = files.length;
+
+    const initialItems: DriveUploadItem[] = files.map((f, i) => ({
+      id: `up_item_${Date.now()}_${i}`,
+      fileName: f.name,
+      sizeLabel: formatFileSize(f.size || 3400000),
+      status: i === 0 ? 'uploading' : 'queued',
+    }));
+
     setAnalyzing(true);
-    setCullNotice(`Running HTML5 Canvas Laplacian blur & contrast analysis on ${fileList.length} file(s)...`);
+    setUploadTracker({
+      active: true,
+      minimized: false,
+      completed: false,
+      totalSelected: total,
+      uploadedCount: 0,
+      remainingCount: total,
+      progressPercent: 0,
+      currentFileName: files[0]?.name || '',
+      items: initialItems,
+    });
+    setCullNotice(null);
 
     try {
-      const files = Array.from(fileList);
       const analyzed: ShootPhoto[] = [];
 
-      for (let idx = 0; idx < files.length; idx++) {
+      for (let idx = 0; idx < total; idx++) {
         const file = files[idx];
         const baseName = file.name.replace(/\.[^.]+$/, '');
         const isRawExt = /\.(cr3|cr2|nef|arw|dng|raf|orf)$/i.test(file.name);
         const fallbackUrl =
-          idx % 3 === 0
+          idx % 4 === 0
             ? PIXELFOTOS_ASSETS.heroRoyalWedding
-            : idx % 3 === 1
+            : idx % 4 === 1
             ? PIXELFOTOS_ASSETS.weddingHaldi
+            : idx % 4 === 2
+            ? PIXELFOTOS_ASSETS.weddingBridal
             : PIXELFOTOS_ASSETS.weddingSangeet;
+
+        setUploadTracker((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentFileName: file.name,
+                items: prev.items.map((item, i) =>
+                  i === idx ? { ...item, status: 'uploading' } : item
+                ),
+              }
+            : null
+        );
+
+        await pauseFrame(75);
 
         const dataUrl =
           file.type.startsWith('image/') && !isRawExt
@@ -108,7 +181,14 @@ export const Module1AICulling: React.FC = () => {
           fileName: isRawExt ? `${baseName}.jpg` : file.name,
           rawFileName: isRawExt ? file.name : `${baseName}.CR3`,
           url: dataUrl,
-          eventSection: 'Wedding',
+          eventSection:
+            idx % 4 === 0
+              ? 'Wedding'
+              : idx % 4 === 1
+              ? 'Haldi'
+              : idx % 4 === 2
+              ? 'Portraits'
+              : 'Sangeet',
           poseClusterId: 'Analyzing...',
           cullingTag: metrics.suggestedTag,
           confidenceScore: metrics.confidenceScore,
@@ -125,6 +205,31 @@ export const Module1AICulling: React.FC = () => {
           exifSummary: `${metrics.width}×${metrics.height}px · Luma ${metrics.brightnessScore}% · Contrast ${metrics.contrastScore}%`,
           capturedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         });
+
+        const uploaded = idx + 1;
+        const remaining = Math.max(0, total - uploaded);
+        const pct = Math.round((uploaded / total) * 100);
+
+        setUploadTracker((prev) =>
+          prev
+            ? {
+                ...prev,
+                uploadedCount: uploaded,
+                remainingCount: remaining,
+                progressPercent: pct,
+                completed: uploaded === total,
+                items: prev.items.map((item, i) =>
+                  i === idx
+                    ? { ...item, status: 'completed', sharpness: metrics.sharpnessScore }
+                    : i === idx + 1
+                    ? { ...item, status: 'uploading' }
+                    : item
+                ),
+              }
+            : null
+        );
+
+        await pauseFrame(55);
       }
 
       const clustered = clusterAndFlagDuplicates(analyzed);
@@ -132,11 +237,30 @@ export const Module1AICulling: React.FC = () => {
       const bestCount = clustered.filter((c) => c.aiSelected).length;
       const blurryCount = clustered.filter((c) => c.cullingTag === 'blurry').length;
       setCullNotice(
-        `Canvas Laplacian analysis complete on ${clustered.length} file(s): ${bestCount} Best Picks, ${blurryCount} Low-Sharpness tagged.`
+        `Uploaded & analyzed ${clustered.length} wedding photo(s): ${bestCount} Best Picks auto-selected, ${blurryCount} low-sharpness flagged.`
       );
     } finally {
       setAnalyzing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
+  };
+
+  const handleSimulateBulkWeddingUpload = async () => {
+    if (analyzing) return;
+    const sampleNames = [
+      'PF_WED_101_BridalEntry.jpg',
+      'PF_WED_102_VarmalaPetalShower.jpg',
+      'PF_WED_103_MandapRituals.jpg',
+      'PF_WED_104_HaldiLaughter.jpg',
+      'PF_WED_105_CoupleSunsetArch.jpg',
+      'PF_WED_106_SangeetSpotlight.jpg',
+    ];
+    const syntheticFiles = sampleNames.map(
+      (name) => new File(['wedding-frame'], name, { type: 'application/octet-stream' })
+    );
+    await processIncomingFiles(syntheticFiles);
   };
 
   const handleAnalyzeExistingBatch = async () => {
@@ -282,13 +406,13 @@ export const Module1AICulling: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
           <p className="text-xs font-mono text-[#B58E24] dark:text-[#D4AF37]">
-            Module 01 · Client-Side Laplacian Blur &amp; Burst Clustering
+            Module 01 · Google Drive-Style Bulk Upload &amp; AI Photo Culling
           </p>
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-0.5">
-            AI Photo Culling Engine
+            AI Photo Culling &amp; Bulk Upload Studio
           </h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
-            Runs HTML5 Canvas Laplacian variance blur detection, luminance/contrast scoring, and perceptual dHash duplicate grouping, then exports selected photos as a ZIP.
+            Upload bulk wedding photos with a real-time Google Drive-style progress tracker, automatic Laplacian blur detection, duplicate clustering, and 1-click ZIP export.
           </p>
         </div>
 
@@ -300,7 +424,16 @@ export const Module1AICulling: React.FC = () => {
             className="min-h-[44px] px-4 py-2 rounded-full text-xs font-semibold bg-[#D4AF37] text-[#090B10] hover:bg-[#c59f2c] active:scale-[0.98] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60"
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>{analyzing ? 'Analyzing Pixels...' : 'Upload Photos'}</span>
+            <span>{analyzing ? 'Uploading Batch...' : 'Bulk Upload Photos'}</span>
+          </button>
+          <button
+            type="button"
+            disabled={analyzing}
+            onClick={handleSimulateBulkWeddingUpload}
+            className="min-h-[44px] px-4 py-2 rounded-full text-xs font-medium liquid-glass-subtle hover:border-[#D4AF37] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60"
+          >
+            <FolderUp className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Demo 6-Photo Batch Upload</span>
           </button>
           <button
             type="button"
@@ -309,7 +442,7 @@ export const Module1AICulling: React.FC = () => {
             className="min-h-[44px] px-4 py-2 rounded-full text-xs font-medium liquid-glass-subtle hover:border-[#D4AF37] transition inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
           >
             <ScanSearch className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Canvas Scan</span>
+            <span>Re-Scan Batch</span>
           </button>
           <button
             type="button"
@@ -347,6 +480,157 @@ export const Module1AICulling: React.FC = () => {
         </div>
       </div>
 
+      {/* Google Drive-Style Live Bulk Upload Progress Dashboard Card */}
+      {uploadTracker && (
+        <div className="rounded-[24px] liquid-glass border border-[#D4AF37]/45 overflow-hidden shadow-xl">
+          <div className="px-5 py-4 bg-black/[0.03] dark:bg-white/[0.04] border-b border-black/8 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 text-[#B58E24] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                {uploadTracker.completed ? (
+                  <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                ) : (
+                  <CloudUpload className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                  {uploadTracker.completed
+                    ? `Upload Complete · ${uploadTracker.uploadedCount} of ${uploadTracker.totalSelected} Photos Uploaded`
+                    : `Uploading Wedding Photos · ${uploadTracker.currentFileName}`}
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Google Drive-style bulk transfer &amp; live Laplacian sharpness indexing
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-mono font-bold text-[#B58E24] dark:text-[#D4AF37] tabular-nums">
+                {uploadTracker.progressPercent}%
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setUploadTracker((prev) =>
+                    prev ? { ...prev, minimized: !prev.minimized } : null
+                  )
+                }
+                aria-label="Minimize or expand upload queue"
+                className="w-8 h-8 rounded-lg liquid-glass-subtle flex items-center justify-center text-zinc-600 dark:text-zinc-300 cursor-pointer"
+              >
+                {uploadTracker.minimized ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                disabled={!uploadTracker.completed}
+                onClick={() => setUploadTracker(null)}
+                aria-label="Close upload tracker"
+                className="w-8 h-8 rounded-lg liquid-glass-subtle flex items-center justify-center text-zinc-600 dark:text-zinc-300 disabled:opacity-40 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {/* 4 Key Google Drive Upload Counters */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+                <p className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Total Selected
+                </p>
+                <p className="mt-1 text-xl font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">
+                  {uploadTracker.totalSelected} Photos
+                </p>
+              </div>
+              <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+                <p className="text-[11px] font-mono uppercase tracking-wider text-[#10B981]">
+                  Photos Uploaded
+                </p>
+                <p className="mt-1 text-xl font-mono font-semibold text-[#10B981] tabular-nums">
+                  {uploadTracker.uploadedCount} Uploaded
+                </p>
+              </div>
+              <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+                <p className="text-[11px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Photos Remaining
+                </p>
+                <p className="mt-1 text-xl font-mono font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
+                  {uploadTracker.remainingCount} Remaining
+                </p>
+              </div>
+              <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+                <p className="text-[11px] font-mono uppercase tracking-wider text-[#B58E24] dark:text-[#D4AF37]">
+                  Live Progress
+                </p>
+                <p className="mt-1 text-xl font-mono font-semibold text-[#B58E24] dark:text-[#D4AF37] tabular-nums">
+                  {uploadTracker.progressPercent}% Done
+                </p>
+              </div>
+            </div>
+
+            {/* Live Progress Bar with Percentage */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-mono tabular-nums">
+                <span className="text-zinc-600 dark:text-zinc-300">
+                  {uploadTracker.uploadedCount} / {uploadTracker.totalSelected} uploaded ({uploadTracker.remainingCount} left)
+                </span>
+                <span className="font-semibold text-[#10B981]">
+                  {uploadTracker.progressPercent}%
+                </span>
+              </div>
+              <div className="w-full h-3 rounded-full bg-black/10 dark:bg-white/12 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#D4AF37] to-[#10B981] transition-all duration-200 rounded-full"
+                  style={{ width: `${uploadTracker.progressPercent}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Expandable Google Drive Per-File Queue List */}
+            {!uploadTracker.minimized && (
+              <div className="max-h-48 overflow-y-auto divide-y divide-black/8 dark:divide-white/8 rounded-2xl border border-black/8 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
+                {uploadTracker.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="px-4 py-2.5 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileImage className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                      <span className="font-medium truncate text-zinc-900 dark:text-white">
+                        {item.fileName}
+                      </span>
+                      <span className="font-mono text-[11px] text-zinc-400 shrink-0">
+                        {item.sizeLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 font-mono text-[11px]">
+                      {item.status === 'completed' ? (
+                        <span className="inline-flex items-center gap-1 text-[#10B981]">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Uploaded {item.sharpness ? `· Sharp ${item.sharpness}%` : ''}
+                        </span>
+                      ) : item.status === 'uploading' ? (
+                        <span className="inline-flex items-center gap-1 text-[#D4AF37]">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Uploading...
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400">Queued</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Liquid Glass Dropzone */}
       <div
         onDragOver={(e) => {
@@ -359,10 +643,11 @@ export const Module1AICulling: React.FC = () => {
           setIsDragging(false);
           processIncomingFiles(e.dataTransfer.files);
         }}
-        className={`rounded-[24px] p-5 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-dashed ${
+        onClick={() => !analyzing && fileInputRef.current?.click()}
+        className={`rounded-[24px] p-5 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-dashed cursor-pointer ${
           isDragging
             ? 'border-[#D4AF37] bg-[#D4AF37]/12'
-            : 'liquid-glass border-black/15 dark:border-white/20'
+            : 'liquid-glass border-black/15 dark:border-white/20 hover:border-[#D4AF37]/60'
         }`}
       >
         <div className="flex items-center gap-3.5">
@@ -371,7 +656,7 @@ export const Module1AICulling: React.FC = () => {
           </div>
           <div>
             <div className="text-sm font-semibold">
-              Drop JPEG / PNG / WebP photos to compute real Laplacian sharpness &amp; dHash clusters
+              Drag &amp; drop bulk wedding JPEG / PNG / RAW files here, or click to select photos
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 tabular-nums">
               {counts.all} Total · {counts.aiSelected} Best Picks ·{' '}

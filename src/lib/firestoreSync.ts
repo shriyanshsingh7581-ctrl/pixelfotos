@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   onSnapshot,
@@ -15,10 +16,13 @@ import { OperationType } from '../types';
 import {
   CRMClient,
   EventMicrositeConfig,
+  GalleryDeliveryConfig,
   PrintOrder,
+  PrintProduct,
   QuotationInvoiceRecord,
   StudioExpense,
   TeamAssignment,
+  WatermarkConfig,
 } from '../types/pixelfotos';
 
 function sanitizeId(raw: string): string {
@@ -43,6 +47,16 @@ export async function signInStudioWithGoogle() {
 
 export async function signOutStudio() {
   await signOut(auth);
+}
+
+export async function deleteOwnerDoc(collectionName: string, id: string): Promise<void> {
+  const docId = sanitizeId(id);
+  const path = `${collectionName}/${docId}`;
+  try {
+    await deleteDoc(doc(db, collectionName, docId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
 }
 
 export async function saveEventToFirestore(
@@ -135,7 +149,7 @@ export async function saveCrmLeadToFirestore(
         email: client.email.slice(0, 158),
         eventDate: client.eventDate.slice(0, 38),
         packageName: client.packageName.slice(0, 158),
-        packageValueInr: Number(client.packageValueInr) || 0,
+        packageValueInr: Math.max(0, Number(client.packageValueInr) || 0),
         leadStatus: client.leadStatus,
         communicationLogs: client.communicationLogs.slice(0, 100),
         ...(isNew ? { createdAt: serverTimestamp() } : {}),
@@ -176,24 +190,110 @@ export async function saveTeamTaskToFirestore(
 
 export async function saveExpenseToFirestore(
   expense: StudioExpense,
-  ownerId: string
+  ownerId: string,
+  isNew = true
 ): Promise<void> {
   const docId = sanitizeId(expense.id);
   const path = `expenses/${docId}`;
   try {
-    await setDoc(doc(db, 'expenses', docId), {
-      id: docId,
-      ownerId: sanitizeId(ownerId),
-      eventId: sanitizeId(expense.eventId),
-      eventName: expense.eventName.slice(0, 138),
-      category: expense.category,
-      description: expense.description.slice(0, 238),
-      amountInr: Math.max(0, Number(expense.amountInr) || 0),
-      date: expense.date.slice(0, 38),
-      createdAt: serverTimestamp(),
-    });
+    await setDoc(
+      doc(db, 'expenses', docId),
+      {
+        id: docId,
+        ownerId: sanitizeId(ownerId),
+        eventId: sanitizeId(expense.eventId),
+        eventName: expense.eventName.slice(0, 138),
+        category: expense.category,
+        description: expense.description.slice(0, 238),
+        amountInr: Math.max(0, Number(expense.amountInr) || 0),
+        date: expense.date.slice(0, 38),
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
+      },
+      { merge: !isNew }
+    );
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, path);
+    handleFirestoreError(error, isNew ? OperationType.CREATE : OperationType.UPDATE, path);
+  }
+}
+
+export async function savePrintProductToFirestore(
+  product: PrintProduct,
+  ownerId: string,
+  isNew = false
+): Promise<void> {
+  const docId = sanitizeId(product.id);
+  const path = `print_products/${docId}`;
+  const safePreview =
+    product.previewImageUrl &&
+    !product.previewImageUrl.startsWith('data:') &&
+    product.previewImageUrl.length <= 490
+      ? product.previewImageUrl
+      : '';
+  try {
+    await setDoc(
+      doc(db, 'print_products', docId),
+      {
+        id: docId,
+        ownerId: sanitizeId(ownerId),
+        name: product.name.slice(0, 138),
+        category: product.category,
+        dimensions: product.dimensions.slice(0, 98),
+        studioCostInr: Math.max(0, Number(product.studioCostInr) || 0),
+        clientPriceInr: Math.max(0, Number(product.clientPriceInr) || 0),
+        previewImageUrl: safePreview,
+        isPublic: true,
+        updatedAt: serverTimestamp(),
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
+      },
+      { merge: !isNew }
+    );
+  } catch (error) {
+    handleFirestoreError(error, isNew ? OperationType.CREATE : OperationType.UPDATE, path);
+  }
+}
+
+export async function saveStudioSettingsToFirestore(
+  settings: {
+    activeLutId: string;
+    batchExposureMatch: boolean;
+    watermark: WatermarkConfig;
+    deliveryConfig: GalleryDeliveryConfig;
+  },
+  ownerId: string,
+  isNew = false
+): Promise<void> {
+  const docId = sanitizeId(ownerId);
+  const path = `studio_settings/${docId}`;
+  try {
+    await setDoc(
+      doc(db, 'studio_settings', docId),
+      {
+        id: docId,
+        ownerId: docId,
+        activeLutId: settings.activeLutId.slice(0, 118),
+        batchExposureMatch: Boolean(settings.batchExposureMatch),
+        watermarkText: settings.watermark.text.slice(0, 118),
+        watermarkFont: (settings.watermark.fontFamily || 'Cormorant Garamond').slice(0, 58),
+        watermarkScale: Math.max(25, Math.min(300, Number(settings.watermark.scale) || 100)),
+        watermarkOpacity: Math.max(0, Math.min(100, Number(settings.watermark.opacity) || 75)),
+        watermarkPosition: settings.watermark.position.slice(0, 28),
+        watermarkEnabled: Boolean(settings.watermark.enabled),
+        studioName: settings.deliveryConfig.studioName.slice(0, 138),
+        studioLogoText: settings.deliveryConfig.studioLogoText.slice(0, 78),
+        accentColor: settings.deliveryConfig.accentColor.slice(0, 18),
+        pinProtected: Boolean(settings.deliveryConfig.pinProtected),
+        allowHighResDownload: Boolean(settings.deliveryConfig.allowHighResDownload),
+        upiId: (settings.deliveryConfig.upiId || 'pixelfotos.studio@okaxis').slice(0, 118),
+        upiPayeeName: (
+          settings.deliveryConfig.upiPayeeName || settings.deliveryConfig.studioName
+        ).slice(0, 138),
+        updatedAt: serverTimestamp(),
+        ...(isNew ? { createdAt: serverTimestamp() } : {}),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
 
@@ -253,6 +353,7 @@ export async function saveInvoiceToFirestore(
         items: invoice.items.slice(0, 40),
         advancePaidInr: Math.max(0, Number(invoice.advancePaidInr) || 0),
         upiId: invoice.upiId.slice(0, 118),
+        payeeName: (invoice.payeeName || 'PixelFotos Studio').slice(0, 138),
         ...(isNew ? { createdAt: serverTimestamp() } : {}),
       },
       { merge: !isNew }
